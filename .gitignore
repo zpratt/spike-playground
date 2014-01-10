@@ -1,0 +1,6 @@
+*.iml
+node_modules/*
+js/bower_components/*
+**/.module-cache/*
+**/.sass-cache/*
+**/*.lock*

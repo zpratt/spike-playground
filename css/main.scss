@@ -1,0 +1,15 @@
+#main-container {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+  }
+  li {
+    border: 1px solid #000;
+    border-top: 0px;
+    border-radius: 0px 0px 4px 4px;
+    display: block;
+    margin-bottom: 2px;
+    padding: 0 1em;
+  }
+}
