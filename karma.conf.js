@@ -1,26 +1,28 @@
-module.exports = function(karma) {
+module.exports = function(config) {
     'use strict';
-    karma.set({
+    config.set({
 
         // base path, that will be used to resolve files and exclude
         basePath: '',
 
 
         // frameworks to use
-        frameworks: ['mocha', 'requirejs'],
+        frameworks: ['jasmine'],
 
 
         // list of files / patterns to load in the browser
         files: [
-            'js/bower_components/requirejs/require.js',
-            'js/bower_components/jquery/jquery.js',
-            'js/bower_components/lodash/dist/lodash.compat.js',
-            'js/bower_components/backbone/backbone.js',
-            'js/bower_components/react/react.js',
+            'bower_components/jquery/dist/jquery.js',
+            'bower_components/lodash/dist/lodash.compat.js',
+            'bower_components/backbone/backbone.js',
+//            'bower_components/react/react.js',
+
+            'js/namespace.js',
             'js/components/answers-model.js',
             'js/components/answer-collection.js',
-            'node_modules/should/should.js',
-            'test/answer-collection.spec.js'
+
+            'test/answer-collection.spec.js',
+            'test/namespace.spec.js'
         ],
 
         // test results reporter to use
@@ -38,14 +40,14 @@ module.exports = function(karma) {
 
         // level of logging
         // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-        logLevel: karma.LOG_DEBUG,
+        logLevel: config.LOG_DEBUG,
 
 
         // enable / disable watching file and executing tests whenever any file changes
         autoWatch: false,
 
 
-        browsers: ['Chrome'],
+        browsers: ['PhantomJS'],
 
 
         // If browser does not capture in given timeout [ms], kill it

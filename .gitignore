@@ -1,6 +1,7 @@
 *.iml
-node_modules/*
-js/bower_components/*
-**/.module-cache/*
-**/.sass-cache/*
+.idea
+node_modules
+bower_components
+**/.module-cache
+**/.sass-cache
 **/*.lock*

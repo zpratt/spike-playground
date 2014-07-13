@@ -10,7 +10,7 @@
         },
         componentDidMount: function () {
             var self = this;
-            self.props.data.fetch({
+            this.props.data.fetch({
                 success: function(collection) {
                     self.setState({
                         posts: collection

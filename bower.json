@@ -1,0 +1,31 @@
+{
+  "name": "spike-react-backbone",
+  "version": "0.0.2",
+  "homepage": "https://github.com/zpratt/spike-react-backbone",
+  "authors": [
+    "zach pratt <zach@attackofzach.com>"
+  ],
+  "description": "Tinkering with using reactjs as the view layer with",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "reactjs",
+    "backbone"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "lodash": "~2.4.1",
+    "react": "~0.10.0",
+    "backbone": "~1.1.2",
+    "jquery": "~2.1.1"
+  }
+}

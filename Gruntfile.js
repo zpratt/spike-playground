@@ -18,13 +18,11 @@ module.exports = function(grunt) {
                     ignoreMTime: false
                 },
                 files: {
-                    'js' : 'jsx'
+                    'js/view.js' : 'jsx/*.jsx'
                 }
             }
         }
     });
-
-
 
     // Default task(s).
     grunt.registerTask('default', ['react','karma']);
