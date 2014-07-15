@@ -1,13 +1,10 @@
 /** @jsx React.DOM */
-(function () {
+(function (app) {
     'use strict';
 
-    var AnswerItemView = React.createClass({
-        /*getInitialState: function () {
-
-        },*/
+    app.ns(app, 'AnswerItemView', React.createClass({
         render: function () {
-            return <li>hello</li>;
+            return <li><a href={this.props.href}>{this.props.text}</a></li>;
         }
-    });
-}());
+    }));
+}(app));

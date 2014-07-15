@@ -5,7 +5,6 @@
             score: 0
         },
         parse: function(response) {
-            console.log(JSON.stringify(response));
             for(key in response) {
                 this[key] = response[key];
             }

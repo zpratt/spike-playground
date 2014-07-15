@@ -1,21 +1,19 @@
 /** @jsx React.DOM */
-(function () {
+(function (app) {
     'use strict';
 
-    var AnswerItemView = React.createClass({displayName: 'AnswerItemView',
-        /*getInitialState: function () {
-
-        },*/
+    app.ns(app, 'AnswerItemView', React.createClass({
         render: function () {
-            return React.DOM.li(null, "hello");
+            return React.DOM.li(null, React.DOM.a( {href:this.props.href}, this.props.text));
         }
-    });
-}());
+    }));
+}(app));
 /** @jsx React.DOM */
 (function (app) {
     'use strict';
 
-    var AnswerListView = React.createClass({displayName: 'AnswerListView',
+    var AnswerItemView = app.AnswerItemView,
+        AnswerListView = React.createClass({displayName: 'AnswerListView',
         getInitialState: function () {
             return {
                 posts: {}
@@ -32,7 +30,6 @@
             var post = 'loading';
             var entries = [];
             if (_.isEmpty(this.state.posts)) {
-                post = 'loading';
                 return React.DOM.li(null, "Loading");
             } else {
                 entries = this.state.posts.map(function (model) {
@@ -41,12 +38,6 @@
             }
 
             return React.DOM.ul( {id:"post-list"}, entries);
-        }
-    });
-
-    var AnswerItemView = React.createClass({displayName: 'AnswerItemView',
-        render: function () {
-            return React.DOM.li(null, React.DOM.a( {href:this.props.href}, this.props.text));
         }
     });
 

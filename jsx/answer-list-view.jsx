@@ -2,7 +2,8 @@
 (function (app) {
     'use strict';
 
-    var AnswerListView = React.createClass({
+    var AnswerItemView = app.AnswerItemView,
+        AnswerListView = React.createClass({
         getInitialState: function () {
             return {
                 posts: {}
@@ -19,7 +20,6 @@
             var post = 'loading';
             var entries = [];
             if (_.isEmpty(this.state.posts)) {
-                post = 'loading';
                 return <li>Loading</li>;
             } else {
                 entries = this.state.posts.map(function (model) {
@@ -28,12 +28,6 @@
             }
 
             return <ul id="post-list">{entries}</ul>;
-        }
-    });
-
-    var AnswerItemView = React.createClass({
-        render: function () {
-            return <li><a href={this.props.href}>{this.props.text}</a></li>;
         }
     });
 
