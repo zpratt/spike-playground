@@ -12,7 +12,7 @@
     });
 }());
 /** @jsx React.DOM */
-(function () {
+(function (app) {
     'use strict';
 
     var AnswerListView = React.createClass({displayName: 'AnswerListView',
@@ -22,14 +22,11 @@
             };
         },
         componentDidMount: function () {
-            var self = this;
-            self.props.data.fetch({
-                success: function(collection) {
-                    self.setState({
-                        posts: collection
-                    });
-                }
-            });
+            this.props.data.fetch().done(_.bind(function () {
+                this.setState({
+                    posts: this.props.data
+                });
+            }, this));
         },
         render: function() {
             var post = 'loading';
@@ -38,7 +35,7 @@
                 post = 'loading';
                 return React.DOM.li(null, "Loading");
             } else {
-                entries = _.map(this.state.posts.models, function (model) {
+                entries = this.state.posts.map(function (model) {
                     return AnswerItemView( {href:model.attributes.link, text:model.attributes.owner.display_name} );
                 });
             }
@@ -53,5 +50,5 @@
         }
     });
 
-    React.renderComponent(AnswerListView( {data:new AnswerCollection()} ), document.getElementById('main-container'));
-}());
+    React.renderComponent(AnswerListView( {data:new app.AnswerCollection()} ), document.getElementById('main-container'));
+}(app));
