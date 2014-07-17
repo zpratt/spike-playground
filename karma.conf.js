@@ -15,13 +15,15 @@ module.exports = function(config) {
             'bower_components/jquery/dist/jquery.js',
             'bower_components/lodash/dist/lodash.compat.js',
             'bower_components/backbone/backbone.js',
-//            'bower_components/react/react.js',
+            'bower_components/react/react-with-addons.js',
 
             'js/namespace.js',
             'js/components/answers-model.js',
             'js/components/answer-collection.js',
+            'js/view.js',
 
             'test/answer-collection.spec.js',
+            'test/answer-item-view.spec.js',
             'test/namespace.spec.js'
         ],
 
@@ -47,7 +49,7 @@ module.exports = function(config) {
         autoWatch: false,
 
 
-        browsers: ['PhantomJS'],
+        browsers: ['Chrome'],
 
 
         // If browser does not capture in given timeout [ms], kill it
