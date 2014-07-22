@@ -14,6 +14,8 @@ Also, experimenting with d3 and google maps.
 2. open a browser and visit the [http://localhost:8080/index.html](http://localhost:8080/index.html)
 
 ## To run the google maps/d3 example:
-1. edit map.html and replace `{API-KEY}` with your google maps api key
-2. start up the local server with `node_modules/.bin/http-server`
-3. open a browser and visit the [http://localhost:8080/map.html](http://localhost:8080/map.html)
+1. start up the local server with `node_modules/.bin/http-server`
+2. open a browser and visit the [http://localhost:8080/map.html](http://localhost:8080/map.html)
+
+## Note:
+* The google maps API key will only work from localhost:8080
