@@ -5,8 +5,9 @@
             dy = extents.ne.y;
 
         return function (coordinates) {
-            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]);
-            var pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
+            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]),
+                pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
+
             return [pixelCoordinates.x - dx, pixelCoordinates.y - dy];
         }
     }
@@ -31,13 +32,14 @@
     function createPolygonWith(extents, projection) {
         var path = d3.geo.path().projection(gMapProjectionTransform(projection, extents)),
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
-                        '<line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:1"/> ' +
+                        '<line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:2" vector-effect="non-scaling-stroke"/> ' +
                         '</pattern>',
             svg;
 
         svg = d3.select(this._div).append('svg')
-            .attr('width', extents.width)
-            .attr('height', extents.height)
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('viewBox', '0 0 ' + extents.width + ' ' + extents.height)
             .style('fill', 'grey')
             .style('fill-opacity', '.5')
             .style('stroke', '#000');
@@ -46,11 +48,14 @@
             .data(this._data.features)
             .enter()
             .append('path')
-            .attr('d', path);
+            .attr('d', path)
+            .attr('vector-effect', 'non-scaling-stroke');
 
         svg.insert('defs', 'path').html(pattern);
 
         svg.selectAll('path').attr('fill', 'url(#diagonalHatch)');
+
+        return svg;
     }
 
     function getGoogleLatLngBounds(bounds) {
@@ -87,6 +92,7 @@
         this._div = $('<div />').get(0);
         this._data = data;
         this._bounds = getGoogleLatLngBounds(getBoundsPoints(convertFeatureToBounds(this._data)));
+        this._svg = null;
 
         this.setMap(map);
     }
@@ -115,9 +121,13 @@
             setTopLeftFor(this._div, extents.sw, extents.ne);
             setHeightAndWidthFor(this._div, width, height);
 
-            $(this._div).empty();
-
-            createPolygonWith.call(this, extents, overlayProjection);
+            if (this._svg) {
+                this._svg.attr('width', extents.width);
+                this._svg.attr('height', extents.height);
+            } else {
+                this._svg = createPolygonWith.call(this, extents, overlayProjection);
+                this._data = null;
+            }
         }
     });
 
