@@ -1,42 +1,14 @@
 (function (app) {
 
-    // source for scaling: http://gis.stackexchange.com/questions/7430/google-maps-zoom-level-ratio
-    var scaleFactor = {
-        20 : 1128.497220,
-        19 : 2256.994440,
-        18 : 4513.988880,
-        17 : 9027.977761,
-        16 : 18055.955520,
-        15 : 36111.911040,
-        14 : 72223.822090,
-        13 : 144447.644200,
-        12 : 288895.288400,
-        11 : 577790.576700,
-        10 : 1155581.153000,
-        9  : 2311162.307000,
-        8  : 4622324.614000,
-        7  : 9244649.227000,
-        6  : 18489298.450000,
-        5  : 36978596.910000,
-        4  : 73957193.820000,
-        3  : 147914387.600000,
-        2  : 295828775.300000,
-        1  : 591657550.500000
-    },
-        projection,
-        bounds,
-        dx,
-        dy;
+    function gMapProjectionTransform(projection, extents) {
+        var dx = extents.sw.x,
+            dy = extents.ne.y;
 
-    function googleMapProjection(coordinates) {
-//        var sw = bounds.getSouthWest(),
-//            ne = bounds.getNorthEast(),
-//
-//            nw = ne.;
-
-        var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]);
-        var pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
-        return [pixelCoordinates.x-dx, pixelCoordinates.y-dy];
+        return function (coordinates) {
+            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]);
+            var pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
+            return [pixelCoordinates.x - dx, pixelCoordinates.y - dy];
+        }
     }
 
     function getBoundsPoints(bounds) {
@@ -56,55 +28,29 @@
         return d3.geo.bounds(data);
     }
 
-    function getCenterPointFromBounds(data) {
-        var bounds = convertFeatureToBounds(data),
-            points = getBoundsPoints(bounds);
+    function createPolygonWith(extents, projection) {
+        var path = d3.geo.path().projection(gMapProjectionTransform(projection, extents)),
+            pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
+                        '<line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:1"/> ' +
+                        '</pattern>',
+            svg;
 
-        return {
-            xCenter: ((points.ne.lng + points.sw.lng) / 2),
-            yCenter: (points.ne.lat + points.sw.lat) / 2
-        }
-    }
-
-    function getPathWith() {
-//        var currentZoomLevel = app.map.getZoom(),
-//            scale = scaleFactor[currentZoomLevel],
-//            bounds = getCenterPointFromBounds(data),
-//          var projection = d3.geo.mercator()
-//                .center([ bounds.xCenter, bounds.yCenter])
-//                .scale(50000)
-//                .translate([width / 2, height / 2]);
-
-        return d3.geo.path().projection(googleMapProjection)
-            .center();
-    }
-
-    function createPolygonWith(element, width, height, data) {
-        var centerPoint = getCenterPointFromBounds(data),
-            path = d3.geo.path().projection(googleMapProjection);
-//                .center([ centerPoint.xCenter, centerPoint.yCenter]);
-
-        var svg = d3.select(element).append('svg')
-                .attr('width', width)
-                .attr('height', height)
-                .style('fill', 'grey')
-                .style('fill-opacity', '.5')
-                .style('stroke', '#000');
+        svg = d3.select(this._div).append('svg')
+            .attr('width', extents.width)
+            .attr('height', extents.height)
+            .style('fill', 'grey')
+            .style('fill-opacity', '.5')
+            .style('stroke', '#000');
 
         svg.selectAll('path')
-            .data(data.features)
+            .data(this._data.features)
             .enter()
             .append('path')
             .attr('d', path);
 
-//        <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-//            <line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:1" />
-//        </pattern>
-        svg.insert('defs', 'path').html('<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> <line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:1"/> </pattern>');
+        svg.insert('defs', 'path').html(pattern);
 
         svg.selectAll('path').attr('fill', 'url(#diagonalHatch)');
-
-        return svg;
     }
 
     function getGoogleLatLngBounds(bounds) {
@@ -114,9 +60,33 @@
         return new google.maps.LatLngBounds(swPoint, nePoint);
     }
 
+    function getExtents(projection) {
+        var southWestPoint = projection.fromLatLngToDivPixel(this._bounds.getSouthWest()),
+            northEastPoint = projection.fromLatLngToDivPixel(this._bounds.getNorthEast());
+
+        return {
+            sw: southWestPoint,
+            ne: northEastPoint,
+
+            width: northEastPoint.x - southWestPoint.x,
+            height: southWestPoint.y - northEastPoint.y
+        }
+    }
+
+    function setTopLeftFor(div, sw, ne) {
+        div.style.left = sw.x + 'px';
+        div.style.top = ne.y + 'px';
+    }
+
+    function setHeightAndWidthFor(div, width, height) {
+        div.style.width = width + 'px';
+        div.style.height = height + 'px';
+    }
+
     function GroundOverlay (map, data) {
         this._div = $('<div />').get(0);
         this._data = data;
+        this._bounds = getGoogleLatLngBounds(getBoundsPoints(convertFeatureToBounds(this._data)));
 
         this.setMap(map);
     }
@@ -130,85 +100,27 @@
             $(this._div).addClass('ground-overlay-view');
 
             panes.overlayLayer.appendChild(this._div);
-
-//            google.maps.event.trigger(this, 'ready', {element: this._div});
         },
 
         draw: function () {
-            var overlayProjection = this.getProjection();
-            projection = overlayProjection;
+            var overlayProjection = this.getProjection(),
+                extents,
+                width,
+                height;
 
-            this._bounds = getGoogleLatLngBounds(getBoundsPoints(convertFeatureToBounds(this._data)));
-            bounds = this._bounds;
+            extents = getExtents.call(this, overlayProjection);
+            width = extents.width;
+            height = extents.height;
 
-            var sw = overlayProjection.fromLatLngToDivPixel(this._bounds.getSouthWest());
-            var ne = overlayProjection.fromLatLngToDivPixel(this._bounds.getNorthEast());
-
-            dx = sw.x;
-            dy = ne.y;
-
-            this._div.style.left = sw.x + 'px';
-            this._div.style.top = ne.y + 'px';
-            var width = (ne.x - sw.x);
-            this._div.style.width = width + 'px';
-            var height = (sw.y - ne.y);
-            this._div.style.height = height + 'px';
+            setTopLeftFor(this._div, extents.sw, extents.ne);
+            setHeightAndWidthFor(this._div, width, height);
 
             $(this._div).empty();
 
-            var svg = createPolygonWith(this._div, width, height, this._data);
-
-            svg.style('top', ne.y + 'px');
-            svg.style('left', sw.x + 'px');
-
-            app.svg = svg;
-
-//            google.maps.event.trigger(this, 'ready', {element: this._div});
+            createPolygonWith.call(this, extents, overlayProjection);
         }
     });
 
     app.ns(app, 'GroundViewOverlay', GroundOverlay);
 
 }(app));
-
-
-/*
-var overlay = new google.maps.OverlayView();
-
-overlay.onAdd = function () {
-    var layer = d3.select(this.getPanes().overlayLayer).append("div").attr("class", "SvgOverlay").attr("id","mySvg");
-    var svg = layer.append("svg");
-    var adminDivisions = svg.append("g").attr("class", "AdminDivisions");
-
-    overlay.draw = function () {
-        var markerOverlay = this;
-        var overlayProjection = markerOverlay.getProjection();
-
-        // Turn the overlay projection into a d3 projection
-        var googleMapProjection = function (coordinates) {
-            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]);
-            var pixelCoordinates = overlayProjection.fromLatLngToDivPixel(googleCoordinates);
-            return [pixelCoordinates.x + 4000, pixelCoordinates.y + 4000];
-        }
-
-        path = d3.geo.path().projection(googleMapProjection);
-
-        adminDivisions.selectAll("path")
-            .data(geoJson.features)
-            .attr("d", path) // update existing paths
-            .attr("class","myPathClass")
-            .enter().append("svg:path")
-            .attr("d", path);
-
-    };
-
-    //DOESN'T WORK  :(
-    //Try adding click event to main-<svg>
-    d3.selectAll(".SvgOverlay").on("click", doSomething);
-
-    //Try adding click event to individual <path>
-    d3.selectAll(".myPathClass").on("click", doSomething);
-};
-
-});
-*/
