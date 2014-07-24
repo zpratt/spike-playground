@@ -34,26 +34,24 @@
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
                         '<line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:2" vector-effect="non-scaling-stroke"/> ' +
                         '</pattern>',
-            svg;
 
-        svg = d3.select(this._div).append('svg')
-            .attr('width', '100%')
+            svg = d3.select(this._div).append('svg');
+
+        svg.append('defs').html(pattern);
+
+        svg.attr('width', '100%')
             .attr('height', '100%')
             .attr('viewBox', '0 0 ' + extents.width + ' ' + extents.height)
             .style('fill', 'grey')
             .style('fill-opacity', '.5')
-            .style('stroke', '#000');
-
-        svg.selectAll('path')
+            .style('stroke', '#000')
+            .selectAll('path')
             .data(this._data.features)
             .enter()
             .append('path')
             .attr('d', path)
-            .attr('vector-effect', 'non-scaling-stroke');
-
-        svg.insert('defs', 'path').html(pattern);
-
-        svg.selectAll('path').attr('fill', 'url(#diagonalHatch)');
+            .attr('vector-effect', 'non-scaling-stroke')
+            .attr('fill', 'url(#diagonalHatch)');
 
         return svg;
     }
