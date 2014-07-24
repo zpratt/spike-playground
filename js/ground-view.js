@@ -84,16 +84,27 @@
             path = d3.geo.path().projection(googleMapProjection);
 //                .center([ centerPoint.xCenter, centerPoint.yCenter]);
 
-        return d3.select(element).append('svg')
+        var svg = d3.select(element).append('svg')
                 .attr('width', width)
                 .attr('height', height)
                 .style('fill', 'grey')
                 .style('fill-opacity', '.5')
-                .selectAll('path')
-                .data(data.features)
-                .enter()
-                .append('path')
-                .attr('d', path);
+                .style('stroke', '#000');
+
+        svg.selectAll('path')
+            .data(data.features)
+            .enter()
+            .append('path')
+            .attr('d', path);
+
+//        <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+//            <line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:1" />
+//        </pattern>
+        svg.insert('defs', 'path').html('<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> <line x1="0" y1="0" x2="0" y2="10" style="stroke:black; stroke-width:1"/> </pattern>');
+
+        svg.selectAll('path').attr('fill', 'url(#diagonalHatch)');
+
+        return svg;
     }
 
     function getGoogleLatLngBounds(bounds) {
@@ -149,6 +160,8 @@
 
             svg.style('top', ne.y + 'px');
             svg.style('left', sw.x + 'px');
+
+            app.svg = svg;
 
 //            google.maps.event.trigger(this, 'ready', {element: this._div});
         }

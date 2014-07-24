@@ -72,6 +72,7 @@
             .attr('height', height)
             .style('fill', 'grey')
             .style('fill-opacity', '.5')
+            .style('stroke', '#000')
             .selectAll('path')
             .data(data.features)
             .enter()
