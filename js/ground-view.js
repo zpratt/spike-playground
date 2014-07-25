@@ -29,13 +29,13 @@
         return d3.geo.bounds(data);
     }
 
-    function createPolygonWith(extents, projection) {
+    function createPolygonWith(element, extents, projection) {
         var path = d3.geo.path().projection(gMapProjectionTransform(projection, extents)),
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
                         '<line x1="0" y1="0" x2="0" y2="10"/> ' +
                         '</pattern>',
 
-            svg = d3.select(this._div).append('svg');
+            svg = d3.select(element).append('svg');
 
         svg.append('defs').html(pattern);
 
@@ -82,7 +82,9 @@
     }
 
     function GroundOverlay (map, data) {
-        this._div = $('<div />').get(0);
+        this._div = document.createElement('div');
+        this._div.className = 'ground-overlay-view';
+
         this._data = data;
         this._bounds = getGoogleLatLngBounds(getBoundsPoints(convertFeatureToBounds(this._data)));
         this._svg = null;
@@ -96,13 +98,12 @@
         onAdd: function () {
             var panes = this.getPanes();
 
-            $(this._div).addClass('ground-overlay-view');
-
             panes.overlayLayer.appendChild(this._div);
         },
 
         draw: function () {
             var overlayProjection = this.getProjection(),
+                fragment = document.createDocumentFragment(),
                 extents,
                 width,
                 height;
@@ -118,9 +119,11 @@
                 this._svg.attr('width', extents.width);
                 this._svg.attr('height', extents.height);
             } else {
-                this._svg = createPolygonWith.call(this, extents, overlayProjection);
+                this._svg = createPolygonWith.call(this, fragment, extents, overlayProjection);
                 this._data = null;
             }
+
+            this._div.appendChild(fragment);
         }
     });
 
