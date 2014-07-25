@@ -2,6 +2,7 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-react');
+    grunt.loadNpmTasks('grunt-sass');
 
     // Project configuration.
     grunt.initConfig({
@@ -21,9 +22,16 @@ module.exports = function(grunt) {
                     'js/view.js' : 'jsx/*.jsx'
                 }
             }
+        },
+        sass: {
+            dist: {
+                files: {
+                    'css/main.css': 'sass/*.scss'
+                }
+            }
         }
     });
 
     // Default task(s).
-    grunt.registerTask('default', ['react','karma']);
+    grunt.registerTask('default', ['react','sass']);
 };

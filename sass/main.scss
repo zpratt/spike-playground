@@ -1,0 +1,56 @@
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  height: 100%;
+  width: 100%;
+}
+
+#map-canvas {
+  height: 100%;
+}
+
+.ground-overlay-view {
+  position: absolute;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    fill: rgb(128, 128, 128);
+    fill-opacity: 0.5;
+    stroke: rgb(0, 0, 0);
+
+    path, line {
+      vector-effect: non-scaling-stroke;
+    }
+
+    line {
+      stroke: rgb(0, 0, 0);
+      stroke-width: 2;
+    }
+  }
+}
+
+#main-container {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+  }
+  li {
+    border: 1px solid #000;
+    border-top: 0px;
+    border-radius: 0px 0px 4px 4px;
+    display: block;
+    margin-bottom: 2px;
+    padding: 0 1em;
+  }
+}
