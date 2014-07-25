@@ -121,9 +121,9 @@
             } else {
                 this._svg = createPolygonWith.call(this, fragment, extents, overlayProjection);
                 this._data = null;
+                this._div.appendChild(fragment);
             }
 
-            this._div.appendChild(fragment);
         }
     });
 
