@@ -43,5 +43,41 @@
             "lat": 40.575,
             "lng": -90.53804
         }
+    },
+    {
+        "name": "Picking Oranges",
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "10",
+        "location": {
+            "lat": 39.79575,
+            "lng": -88.43804
+        }
+    },
+    {
+        "name": "Picking Beans",
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 39.99575,
+            "lng": -88.23804
+        }
+    },
+    {
+        "name": "Picking Corn",
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "10",
+        "location": {
+            "lat": 38.79575,
+            "lng": -87.43804
+        }
+    },
+    {
+        "name": "Picking Sunflowers",
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 38.79575,
+            "lng": -89.33804
+        }
     }
 ]
