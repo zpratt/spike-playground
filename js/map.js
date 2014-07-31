@@ -12,8 +12,8 @@ function initialize() {
         Backbone.Events.trigger('map-idle');
     });
 
-    google.maps.event.addListener(map, 'bounds_changed', function () {
-        Backbone.Events.trigger('bounds-change', map.getBounds());
+    google.maps.event.addListener(map, 'zoom_changed', function () {
+        Backbone.Events.trigger('zoom-change', map.getBounds());
     });
 
     google.maps.event.addListenerOnce(map, 'idle', function () {

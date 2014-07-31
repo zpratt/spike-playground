@@ -1,37 +1,36 @@
 (function (app) {
     var collection = new Backbone.Collection(),
         loaded = collection.fetch({url: '/dummy-data.json'}),
-        mapLoaded = $.Deferred();
+        mapLoaded = $.Deferred(),
+        rects = [];
 
-    function getGoogleMapBoundsXY() {
-        var bounds = app.map.getBounds(),
-            swPoint = bounds.getSouthWest(),
-            nePoint = bounds.getNorthEast(),
+    function convertPointToXY(latLng) {
+        var projection = app.map.getProjection(),
+            gLatLng = new google.maps.LatLng(latLng.lat, latLng.lng),
+            point = projection.fromLatLngToPoint(gLatLng);
+
+        return {x: point.x, y: point.y};
+    }
+
+    function getGoogleMapBoundsXY(inputBounds) {
+        var bounds = inputBounds || app.map.getBounds(),
+            swLatLng = bounds.getSouthWest(),
+            neLatLng = bounds.getNorthEast(),
 
             swXY = convertPointToXY({
-                lat: swPoint.lat(),
-                lng: swPoint.lng()
+                lat: swLatLng.lat(),
+                lng: swLatLng.lng()
             }),
 
             neXY = convertPointToXY({
-                lat: nePoint.lat(),
-                lng: nePoint.lng()
+                lat: neLatLng.lat(),
+                lng: neLatLng.lng()
             });
 
-        return [[swXY.x, swXY.y], [neXY.x, neXY.y]];
-    }
-
-    function convertPointToMercator(point) {
-        var projection = app.map.getProjection(),
-            gLatLng = new google.maps.LatLng(point.lat, point.lng);
-
-        return projection.fromLatLngToPoint(gLatLng);
-    }
-
-    function convertPointToXY(location) {
-        var mercatorPoint = convertPointToMercator(location);
-
-        return {x: mercatorPoint.x, y: mercatorPoint.y};
+        return {
+            sw: swXY,
+            ne: neXY
+        }
     }
 
     function updateNodes(qTree) {
@@ -69,13 +68,70 @@
         return nodes;
     }
 
+    function pointToArray(point) {
+        return [point.x, point.y];
+    }
+
+    function pointsToArray(xyPoints) {
+        return _.map(xyPoints, pointToArray);
+    }
+
+    function createQuadTree(xyPoints, inputBounds) {
+        var bounds = getGoogleMapBoundsXY(inputBounds);
+
+        var quadtree = d3.geom.quadtree()
+                .extent([ [0, 0], [bounds.sw.y, bounds.ne.x] ])
+                (pointsToArray(xyPoints));
+
+        updateNodes(quadtree);
+
+        return quadtree;
+
+    }
+
+    function renderQuadTree(node, x1, y1, x2, y2) {
+        var projection = app.map.getProjection(),
+            swGeo = projection.fromPointToLatLng(new google.maps.Point(x1, y1)),
+            neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2)),
+            bounds = new google.maps.LatLngBounds(swGeo, neGeo),
+
+            rect;
+
+        if (!node.leaf) {
+            rect = new google.maps.Rectangle({
+                bounds: bounds,
+                map: app.map,
+                fillOpacity: 0
+            });
+
+            rects.push(rect);
+        }
+    }
+
+    function collectionToXyPoints() {
+        return _.map(collection.pluck('location'), convertPointToXY);
+    }
+
+    function createAndRenderQuadtree(bounds) {
+        var xyPoints = collectionToXyPoints(),
+            quadtree = createQuadTree(xyPoints, bounds);
+
+        _.each(rects, function (rect) {
+            rect.setMap(null);
+        });
+        quadtree.visit(renderQuadTree);
+
+        return quadtree;
+    }
+
     Backbone.Events.on('map-loaded', function () {
         mapLoaded.resolve();
     });
 
     $.when(mapLoaded, loaded).done(function () {
-//        Backbone.Events.on('bounds-change', function (bounds) {
-//        });
+        Backbone.Events.on('zoom-change', function (bounds) {
+            createAndRenderQuadtree(bounds);
+        });
 
         collection.each(function (item) {
             var marker = new google.maps.Marker({
@@ -85,37 +141,7 @@
             marker.setMap(app.map);
         });
 
-        var xyPoints = _.map(collection.pluck('location'), convertPointToXY),
-            bounds = getGoogleMapBoundsXY(),
-            quadtree = d3.geom.quadtree(xyPoints);
-
-        updateNodes(quadtree);
-
-//        var x0 = bounds[0][0],
-//            y0 = bounds[0][1],
-//            x3 = bounds[1][0],
-//            y3 = bounds[1][0];
-
-        quadtree.visit(function (node, x1, y1, x2, y2) {
-            var works,
-                projection = app.map.getProjection(),
-                swGeo = projection.fromPointToLatLng(new google.maps.Point(x1, y1)),
-                neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2)),
-                bounds = new google.maps.LatLngBounds(swGeo, neGeo),
-
-                rect;
-
-            if (!node.leaf) {
-                rect = new google.maps.Rectangle({
-                    bounds: bounds,
-                    map: app.map
-                });
-//                works = x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
-            }
-        });
-
-        app.quadtree = quadtree;
-        app.points = xyPoints;
+        createAndRenderQuadtree(app.map.getBounds());
     });
 
 }(app));
