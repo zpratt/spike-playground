@@ -22,18 +22,16 @@
     }
 
     function convertPointToMercator(point) {
-        var geoJsonPoint = new Terraformer.Point({
-                type: 'Point',
-                coordinates: [point.lng, point.lat]
-            });
+        var projection = app.map.getProjection(),
+            gLatLng = new google.maps.LatLng(point.lat, point.lng);
 
-        return geoJsonPoint.toMercator();
+        return projection.fromLatLngToPoint(gLatLng);
     }
 
     function convertPointToXY(location) {
         var mercatorPoint = convertPointToMercator(location);
 
-        return {x: mercatorPoint.coordinates[0], y: mercatorPoint.coordinates[1]};
+        return {x: mercatorPoint.x, y: mercatorPoint.y};
     }
 
     function updateNodes(qTree) {
@@ -76,9 +74,8 @@
     });
 
     $.when(mapLoaded, loaded).done(function () {
-        Backbone.Events.on('bounds-change', function (bounds) {
-//            console.log('bounds are: ', bounds);
-        });
+//        Backbone.Events.on('bounds-change', function (bounds) {
+//        });
 
         collection.each(function (item) {
             var marker = new google.maps.Marker({
@@ -101,19 +98,11 @@
 
         quadtree.visit(function (node, x1, y1, x2, y2) {
             var works,
-                swPoint = new Terraformer.Point({
-                    type: 'Point',
-                    coordinates: [x1, y1]
-                }),
-                swGeo = swPoint.toGeographic(),
-                swPointLatLng = new google.maps.LatLng(swGeo.coordinates[1], swGeo.coordinates[0]),
-                nePoint = new Terraformer.Point({
-                    type: 'Point',
-                    coordinates: [x2, y2]
-                }),
-                neGeo = nePoint.toGeographic(),
-                nePointLatLng = new google.maps.LatLng(neGeo.coordinates[1], neGeo.coordinates[0]),
-                bounds = new google.maps.LatLngBounds(swPointLatLng, nePointLatLng),
+                projection = app.map.getProjection(),
+                swGeo = projection.fromPointToLatLng(new google.maps.Point(x1, y1)),
+                neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2)),
+                bounds = new google.maps.LatLngBounds(swGeo, neGeo),
+
                 rect;
 
             if (!node.leaf) {
@@ -124,6 +113,9 @@
 //                works = x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
             }
         });
+
+        app.quadtree = quadtree;
+        app.points = xyPoints;
     });
 
 }(app));
