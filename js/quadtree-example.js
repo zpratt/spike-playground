@@ -39,17 +39,8 @@
         qTree.depth = 0;
 
         qTree.visit(function (node, x1, y1, x2, y2) {
-            var nodeRect = {
-                    left: x1,
-                    right: x2,
-                    bottom: y1,
-                    top: y2
-                },
-                maxDepth = 0,
+            var maxDepth = 0,
                 i;
-
-            node.width = (nodeRect.right - nodeRect.left);
-            node.height = (nodeRect.top - nodeRect.bottom);
 
             nodes.push(node);
 
@@ -61,6 +52,18 @@
 
                         qTree.depth = maxDepth;
                     }
+                }
+            }
+
+            if (!node.leaf) {
+                var leafNodes = _.filter(node.nodes, function (node) {
+                    return (node && node.leaf);
+                });
+
+                if (leafNodes.length > 0) {
+                    node.containsLeaf = true;
+                } else {
+                    node.containsLeaf = false;
                 }
             }
         });
@@ -112,13 +115,15 @@
             rect;
 
         if (!node.leaf) {
-            rect = new google.maps.Rectangle({
-                bounds: bounds,
-                map: app.map,
-                fillOpacity: 0
-            });
+            if (node.containsLeaf) {
+                rect = new google.maps.Rectangle({
+                    bounds: bounds,
+                    map: app.map,
+                    fillOpacity: 0
+                });
 
-            rects.push(rect);
+                rects.push(rect);
+            }
         }
     }
 
@@ -143,8 +148,14 @@
     });
 
     $.when(mapLoaded, loaded).done(function () {
+        var quadtree;
+
         Backbone.Events.on('zoom-change', function (bounds) {
-            createAndRenderQuadtree(bounds);
+//            console.log('map zoomed to: ', app.map.getZoom());
+
+            quadtree = createAndRenderQuadtree(bounds);
+
+//            console.log('depth is: ', quadtree.depth);
         });
 
         Backbone.Events.on('bounds-change', function (bounds) {
@@ -159,7 +170,10 @@
             marker.setMap(app.map);
         });
 
-        createAndRenderQuadtree(app.map.getBounds());
+        quadtree = createAndRenderQuadtree(app.map.getBounds());
+
+//        console.log('map zoomed to: ', app.map.getZoom());
+//        console.log('depth is: ', quadtree.depth);
     });
 
 }(app));

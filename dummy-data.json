@@ -1,6 +1,7 @@
 [
     {
         "name": "Picking Tomatoes",
+        "id": 1,
         "start": "2014/07/19 21:00:00",
         "percent_done": "30",
         "location": {
@@ -10,6 +11,7 @@
     },
     {
         "name": "Picking Potatoes",
+        "id": 2,
         "start": "2014/07/19 21:00:00",
         "percent_done": "80",
         "location": {
@@ -19,6 +21,7 @@
     },
     {
         "name": "Picking Apples",
+        "id": 3,
         "start": "2014/07/19 21:00:00",
         "percent_done": "60",
         "location": {
@@ -28,6 +31,7 @@
     },
     {
         "name": "Picking Oranges",
+        "id": 4,
         "start": "2014/07/19 21:00:00",
         "percent_done": "10",
         "location": {
@@ -37,6 +41,7 @@
     },
     {
         "name": "Picking Beans",
+        "id": 5,
         "start": "2014/07/19 21:00:00",
         "percent_done": "53",
         "location": {
@@ -46,6 +51,7 @@
     },
     {
         "name": "Picking Oranges",
+        "id": 6,
         "start": "2014/07/19 21:00:00",
         "percent_done": "10",
         "location": {
@@ -55,6 +61,7 @@
     },
     {
         "name": "Picking Beans",
+        "id": 7,
         "start": "2014/07/19 21:00:00",
         "percent_done": "53",
         "location": {
@@ -64,6 +71,7 @@
     },
     {
         "name": "Picking Corn",
+        "id": 8,
         "start": "2014/07/19 21:00:00",
         "percent_done": "10",
         "location": {
@@ -73,6 +81,7 @@
     },
     {
         "name": "Picking Sunflowers",
+        "id": 9,
         "start": "2014/07/19 21:00:00",
         "percent_done": "53",
         "location": {
