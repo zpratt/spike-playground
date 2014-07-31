@@ -94,7 +94,7 @@
         bounds = getGoogleMapBoundsXY(inputBounds);
 
         quadtree = d3.geom.quadtree()
-            .extent([ [bounds.sw.x, bounds.ne.y], [bounds.ne.x, bounds.sw.y] ])
+            .extent([ [bounds.sw.x - 1, bounds.ne.y - 1], [bounds.ne.x, bounds.sw.y] ])
             (pointsToArray(pointsInBounds));
 
         updateNodes(quadtree);
@@ -144,6 +144,10 @@
 
     $.when(mapLoaded, loaded).done(function () {
         Backbone.Events.on('zoom-change', function (bounds) {
+            createAndRenderQuadtree(bounds);
+        });
+
+        Backbone.Events.on('bounds-change', function (bounds) {
             createAndRenderQuadtree(bounds);
         });
 
