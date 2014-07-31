@@ -76,12 +76,26 @@
         return _.map(xyPoints, pointToArray);
     }
 
-    function createQuadTree(xyPoints, inputBounds) {
-        var bounds = getGoogleMapBoundsXY(inputBounds);
+    function pointInBounds(point, bounds) {
+        var projection = app.map.getProjection(),
+            latLng = projection.fromPointToLatLng(new google.maps.Point(point.x, point.y));
 
-        var quadtree = d3.geom.quadtree()
-                .extent([ [0, 0], [bounds.sw.y, bounds.ne.x] ])
-                (pointsToArray(xyPoints));
+        return bounds.contains(latLng);
+    }
+
+    function createQuadTree(xyPoints, inputBounds) {
+        var quadtree,
+            bounds,
+
+            pointsInBounds = _.filter(xyPoints, function (point) {
+                return pointInBounds(point, inputBounds)
+            });
+
+        bounds = getGoogleMapBoundsXY(inputBounds);
+
+        quadtree = d3.geom.quadtree()
+            .extent([ [bounds.sw.x, bounds.ne.y], [bounds.ne.x, bounds.sw.y] ])
+            (pointsToArray(pointsInBounds));
 
         updateNodes(quadtree);
 
