@@ -12,6 +12,7 @@
         return {x: point.x, y: point.y};
     }
 
+    /*
     function getGoogleMapBoundsXY(inputBounds) {
         var bounds = inputBounds || app.map.getBounds(),
             swLatLng = bounds.getSouthWest(),
@@ -32,6 +33,7 @@
             ne: neXY
         }
     }
+    */
 
     function updateNodes(qTree) {
         var nodes = [];
@@ -88,17 +90,23 @@
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-            bounds,
+//            bounds,
 
             pointsInBounds = _.filter(xyPoints, function (point) {
                 return pointInBounds(point, inputBounds)
             });
 
-        bounds = getGoogleMapBoundsXY(inputBounds);
+//        bounds = getGoogleMapBoundsXY(inputBounds);
 
-        quadtree = d3.geom.quadtree()
-            .extent([ [bounds.sw.x - 1, bounds.ne.y - 1], [bounds.ne.x, bounds.sw.y] ])
+        if (xyPoints.length === pointsInBounds.length) {
+            quadtree = d3.geom.quadtree()
+//                .extent([ [bounds.sw.x, bounds.ne.y], [bounds.ne.x, bounds.sw.y] ])
+                .extent([ [0, 0], [255, 255] ])
             (pointsToArray(pointsInBounds));
+        } else {
+            quadtree = d3.geom.quadtree(pointsInBounds);
+
+        }
 
         updateNodes(quadtree);
 
@@ -151,11 +159,7 @@
         var quadtree;
 
         Backbone.Events.on('zoom-change', function (bounds) {
-//            console.log('map zoomed to: ', app.map.getZoom());
-
-            quadtree = createAndRenderQuadtree(bounds);
-
-//            console.log('depth is: ', quadtree.depth);
+            createAndRenderQuadtree(bounds);
         });
 
         Backbone.Events.on('bounds-change', function (bounds) {
@@ -170,10 +174,7 @@
             marker.setMap(app.map);
         });
 
-        quadtree = createAndRenderQuadtree(app.map.getBounds());
-
-//        console.log('map zoomed to: ', app.map.getZoom());
-//        console.log('depth is: ', quadtree.depth);
+        createAndRenderQuadtree(app.map.getBounds());
     });
 
 }(app));
