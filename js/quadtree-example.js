@@ -40,33 +40,13 @@
 
         qTree.depth = 0;
 
-        qTree.visit(function (node, x1, y1, x2, y2) {
-            var maxDepth = 0,
-                i;
-
-            nodes.push(node);
-
-            for (i = 0; i < 4; i++) {
-                if (node.nodes[i]) {
-                    node.nodes[i].depth = node.depth + 1;
-                    if (node.nodes[i].depth > maxDepth) {
-                        maxDepth = node.nodes[i].depth;
-
-                        qTree.depth = maxDepth;
-                    }
-                }
-            }
-
+        qTree.visit(function (node) {
             if (!node.leaf) {
                 var leafNodes = _.filter(node.nodes, function (node) {
                     return (node && node.leaf);
                 });
 
-                if (leafNodes.length > 0) {
-                    node.containsLeaf = true;
-                } else {
-                    node.containsLeaf = false;
-                }
+                node.containsLeaf = leafNodes.length > 0;
             }
         });
 
