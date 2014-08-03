@@ -4,7 +4,9 @@
 
     app.ns(app, 'AnswerItemView', React.createClass({
         render: function () {
-            return React.DOM.li(null, React.DOM.a( {href:this.props.href}, this.props.text));
+            var postHref = this.props.model.get('link'),
+                title = this.props.model.get('title');
+            return React.DOM.li(null, React.DOM.a({href: postHref}, title));
         }
     }));
 }(app));
@@ -13,6 +15,8 @@
     'use strict';
 
     var AnswerItemView = app.AnswerItemView,
+        answerCollection = new app.AnswerCollection(),
+
         AnswerListView = React.createClass({displayName: 'AnswerListView',
         getInitialState: function () {
             return {
@@ -20,26 +24,26 @@
             };
         },
         componentDidMount: function () {
-            this.props.data.fetch().done(_.bind(function () {
+            this.props.collection.loaded.done(_.bind(function () {
                 this.setState({
-                    posts: this.props.data
+                    posts: this.props.collection.loaded.state()
                 });
             }, this));
         },
         render: function() {
-            var post = 'loading';
             var entries = [];
-            if (_.isEmpty(this.state.posts)) {
+            if ('pending' === this.props.collection.loaded.state()) {
                 return React.DOM.li(null, "Loading");
             } else {
-                entries = this.state.posts.map(function (model) {
-                    return AnswerItemView( {href:model.attributes.link, text:model.attributes.owner.display_name} );
+                entries = this.props.collection.map(function (model) {
+                    return AnswerItemView({model: model});
                 });
             }
 
-            return React.DOM.ul( {id:"post-list"}, entries);
+            return React.DOM.ul({id: "post-list"}, entries);
         }
     });
 
-    React.renderComponent(AnswerListView( {data:new app.AnswerCollection()} ), document.getElementById('main-container'));
+    answerCollection.fetch();
+    React.renderComponent(AnswerListView({collection: answerCollection}), document.getElementById('main-container'));
 }(app));

@@ -1,9 +1,21 @@
 (function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
+
+        initialize: function () {
+            this.loaded = $.Deferred();
+        },
+
+        fetch: function () {
+            var jqXHR = Backbone.Collection.prototype.fetch.apply(this, arguments);
+
+            jqXHR.done(this.loaded.resolve);
+            jqXHR.fail(this.loaded.reject);
+        },
+
         parse: function(response) {
             return response.items;
         },
-        url: 'https://api.stackexchange.com/2.1/answers?pagesize=10&fromdate=1382659200&order=desc&sort=activity&site=stackoverflow&filter=!-.Cac(MY(6Qj'
+        url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
     }));
 }(app));
