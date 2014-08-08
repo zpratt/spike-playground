@@ -3,7 +3,6 @@
 apikey.txt
 node_modules
 bower_components
-dist
 **/.module-cache
 **/.sass-cache
 **/*.lock*
