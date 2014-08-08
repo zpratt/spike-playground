@@ -88,5 +88,15 @@
             "lat": 38.79575,
             "lng": -89.33804
         }
+    },
+    {
+        "name": "Picking Watermelon",
+        "id": 9,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 38.63575,
+            "lng": -88.34504
+        }
     }
 ]

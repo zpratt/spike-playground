@@ -4,7 +4,7 @@
         mapLoaded = $.Deferred(),
         rects = [];
 
-    function convertPointToXY(latLng) {
+    function convertLatLngToXy(latLng) {
         var projection = app.map.getProjection(),
             gLatLng = new google.maps.LatLng(latLng.lat, latLng.lng),
             point = projection.fromLatLngToPoint(gLatLng);
@@ -12,18 +12,17 @@
         return {x: point.x, y: point.y};
     }
 
-    /*
-    function getGoogleMapBoundsXY(inputBounds) {
+    function convertGoogleMapBoundsToXY(inputBounds) {
         var bounds = inputBounds || app.map.getBounds(),
             swLatLng = bounds.getSouthWest(),
             neLatLng = bounds.getNorthEast(),
 
-            swXY = convertPointToXY({
+            swXY = convertLatLngToXy({
                 lat: swLatLng.lat(),
                 lng: swLatLng.lng()
             }),
 
-            neXY = convertPointToXY({
+            neXY = convertLatLngToXy({
                 lat: neLatLng.lat(),
                 lng: neLatLng.lng()
             });
@@ -33,14 +32,18 @@
             ne: neXY
         }
     }
-    */
 
     function updateNodes(qTree) {
-        var nodes = [];
-
         qTree.depth = 0;
 
-        qTree.visit(function (node) {
+        qTree.visit(function (node, x1, y1, x2, y2) {
+            node.bounds = {
+                x1: x1,
+                y1: y1,
+                x2: x2,
+                y2: y2
+            };
+
             if (!node.leaf) {
                 var leafNodes = _.filter(node.nodes, function (node) {
                     return (node && node.leaf);
@@ -49,8 +52,6 @@
                 node.containsLeaf = leafNodes.length > 0;
             }
         });
-
-        return nodes;
     }
 
     function pointToArray(point) {
@@ -70,17 +71,13 @@
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-//            bounds,
 
             pointsInBounds = _.filter(xyPoints, function (point) {
                 return pointInBounds(point, inputBounds)
             });
 
-//        bounds = getGoogleMapBoundsXY(inputBounds);
-
         if (xyPoints.length === pointsInBounds.length) {
             quadtree = d3.geom.quadtree()
-//                .extent([ [bounds.sw.x, bounds.ne.y], [bounds.ne.x, bounds.sw.y] ])
                 .extent([ [0, 0], [255, 255] ])
             (pointsToArray(pointsInBounds));
         } else {
@@ -94,39 +91,110 @@
 
     }
 
-    function renderQuadTree(node, x1, y1, x2, y2) {
+    function pointsToGoogleLatLngBounds(x1, y1, x2, y2) {
         var projection = app.map.getProjection(),
             swGeo = projection.fromPointToLatLng(new google.maps.Point(x1, y1)),
-            neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2)),
-            bounds = new google.maps.LatLngBounds(swGeo, neGeo),
+            neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2));
 
-            rect;
+            return new google.maps.LatLngBounds(swGeo, neGeo);
+    }
 
-        if (!node.leaf) {
-            if (node.containsLeaf) {
-                rect = new google.maps.Rectangle({
-                    bounds: bounds,
-                    map: app.map,
-                    fillOpacity: 0
-                });
+    function flattenQuadtree(quadtree) {
+        var nodes = [];
 
-                rects.push(rect);
-            }
-        }
+        quadtree.visit(function (node) {
+            nodes.push(node);
+        });
+
+        return nodes;
+    }
+
+    function googleMapsRectangleFromBounds(bounds) {
+        return new google.maps.Rectangle({
+            bounds: bounds,
+            map: app.map,
+            fillOpacity: 0
+        });
     }
 
     function collectionToXyPoints() {
-        return _.map(collection.pluck('location'), convertPointToXY);
+        return _.map(collection.pluck('location'), convertLatLngToXy);
+    }
+
+    function getContainingBounds(nodes) {
+        return _.filter(nodes, function (childNode) {
+            return childNode.containsLeaf;
+        });
+    }
+
+    function boundsContainedBy(innerBounds, outerBounds) {
+        var outerNe = outerBounds.ne,
+            outerSw = outerBounds.sw,
+            innerSw = innerBounds.sw,
+            innerNe = innerBounds.ne;
+
+        return outerNe.x >= innerNe.x &&
+            outerNe.y >= innerNe.y &&
+            outerSw.x <= innerSw.x &&
+            outerSw.y <= innerSw.y;
     }
 
     function createAndRenderQuadtree(bounds) {
         var xyPoints = collectionToXyPoints(),
-            quadtree = createQuadTree(xyPoints, bounds);
+            quadtree = createQuadTree(xyPoints, bounds),
+            nodes = flattenQuadtree(quadtree),
+
+            boundsContainsBounds = {},
+
+            containingBoundsSet;
 
         _.each(rects, function (rect) {
             rect.setMap(null);
         });
-        quadtree.visit(renderQuadTree);
+
+        containingBoundsSet = _.map(getContainingBounds(nodes), function (node, index) {
+            var nodeBounds = node.bounds,
+                xyBounds = pointsToGoogleLatLngBounds(
+                    nodeBounds.x1,
+                    nodeBounds.y1,
+                    nodeBounds.x2,
+                    nodeBounds.y2
+                );
+
+            xyBounds.id = index;
+
+            return xyBounds;
+        });
+
+        _.each(containingBoundsSet, function (childBounds) {
+            var xyBounds = convertGoogleMapBoundsToXY(childBounds);
+
+            _.times(containingBoundsSet.length, function (index) {
+                var boundsComparedTo = containingBoundsSet[index];
+
+                if (boundsComparedTo.id != childBounds.id) {
+                    var containingXy = convertGoogleMapBoundsToXY(boundsComparedTo),
+                        isBoundsContained = boundsContainedBy(containingXy, xyBounds);
+
+                    if (isBoundsContained) {
+                        if (boundsContainsBounds[childBounds.id]) {
+                            boundsContainsBounds[childBounds.id].push(boundsComparedTo.id);
+                        } else {
+                            boundsContainsBounds[childBounds.id] = [boundsComparedTo.id];
+                        }
+                    }
+                }
+            });
+        });
+
+        _.each(boundsContainsBounds, function (value, key, boundsMapping) {
+            if (!boundsMapping[value]) {
+                rects.push(googleMapsRectangleFromBounds(containingBoundsSet[value]));
+            }
+        });
+
+        app.containingBounds = containingBoundsSet;
+        app.boundsContainsBounds = boundsContainsBounds;
 
         return quadtree;
     }
@@ -154,7 +222,9 @@
             marker.setMap(app.map);
         });
 
-        createAndRenderQuadtree(app.map.getBounds());
+        quadtree = createAndRenderQuadtree(app.map.getBounds());
+
+        app.quadtree = quadtree;
     });
 
 }(app));
