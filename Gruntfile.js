@@ -82,6 +82,13 @@ module.exports = function(grunt) {
                 },
                 src: _.union(sharedProdDependencies, reactExample),
                 dest: 'dist/js/react.js'
+            },
+            svgBoundaryExample: {
+                options: {
+                    sourceMap: true
+                },
+                src: _.union(sharedProdDependencies, boundaryExample),
+                dest: 'dist/js/svg-boundary.js'
             }
         },
         clean: {

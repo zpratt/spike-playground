@@ -4,6 +4,8 @@
         mapLoaded = $.Deferred();
 
     Backbone.Events.on('map-loaded', function () {
+        app.map.setCenter(new google.maps.LatLng(41.577060100767945, -93.90260298828126));
+
         mapLoaded.resolve();
     });
 
