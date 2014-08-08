@@ -1,8 +1,13 @@
 (function (app) {
-    var collection = new Backbone.Collection(),
-        loaded = collection.fetch({url: '/dummy-data.json'}),
+    var host = Backbone.history.location.hostname,
+        collection = new Backbone.Collection(),
+        loaded,
+        data = '/dummy-data.json',
+        endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
         mapLoaded = $.Deferred(),
         rects = [];
+
+    loaded = collection.fetch({url: endPointUrl});
 
     function convertLatLngToXy(latLng) {
         var projection = app.map.getProjection(),
