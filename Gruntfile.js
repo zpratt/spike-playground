@@ -11,9 +11,6 @@ module.exports = function(grunt) {
         ],
         sharedProdDependencies = [
             'js/namespace.js',
-            'js/map.js',
-            'js/iowa.js',
-
             'js/components/answers-model.js',
             'js/components/answer-collection.js'
         ],
@@ -21,11 +18,14 @@ module.exports = function(grunt) {
             'js/view.js'
         ],
         boundaryExample = [
+            'js/iowa.js',
+            'js/map.js',
             'js/donut-graph.js',
             'js/ground-view.js',
             'js/ground-view-example.js'
         ],
         quadtreeExample = [
+            'js/map.js',
             'js/quadtree-example.js'
         ];
 
@@ -75,6 +75,13 @@ module.exports = function(grunt) {
                 },
                 src: _.union(sharedProdDependencies, quadtreeExample),
                 dest: 'dist/js/quadtree.js'
+            },
+            reactExample: {
+                options: {
+                    sourceMap: true
+                },
+                src: _.union(sharedProdDependencies, reactExample),
+                dest: 'dist/js/react.js'
             }
         },
         clean: {
