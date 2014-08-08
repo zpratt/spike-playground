@@ -36,7 +36,31 @@
     };
 
 }(this));
-;function initialize() {
+;(function (app) {
+    app.ns(app, 'AnswersModel', Backbone.Model.extend({
+        initialize: function () {  }
+    }));
+}(app));;(function (app) {
+    app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
+        model: app.AnswersModel,
+
+        initialize: function () {
+            this.loaded = $.Deferred();
+        },
+
+        fetch: function () {
+            var jqXHR = Backbone.Collection.prototype.fetch.apply(this, arguments);
+
+            jqXHR.done(this.loaded.resolve);
+            jqXHR.fail(this.loaded.reject);
+        },
+
+        parse: function(response) {
+            return response.items;
+        },
+        url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
+    }));
+}(app));;function initialize() {
     var mapOptions = {
         center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
         zoom: 7
@@ -63,51 +87,15 @@
     });
 }
 google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
-    app.ns(app, 'IowaGeoJson', function () {
-        return [
-            {"type":"FeatureCollection","properties":{"kind":"state","state":"IA"},"features":[
-                {"type":"Feature","properties":{"kind":"county","name":"Dallas","state":"IA"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-93.8166,41.8638],[-93.7892,41.5133],[-93.8221,41.5078],[-94.2438,41.5023],[-94.2438,41.6009],[-94.2821,41.6009],[-94.2821,41.8638],[-94.1617,41.8638],[-93.8166,41.8638]]]]}}
-            ]},
-            {"type":"FeatureCollection","properties":{"kind":"state","state":"IA"},"features":[
-                {"type":"Feature","properties":{"kind":"county","name":"Polk","state":"IA"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-93.7728,41.8638],[-93.6961,41.8638],[-93.3456,41.8638],[-93.3292,41.5078],[-93.3292,41.4914],[-93.7071,41.5133],[-93.7892,41.5133],[-93.8166,41.8638],[-93.7728,41.8638]]]]}}
-            ]},
-            {"type":"FeatureCollection","properties":{"kind":"state","state":"IA"},"features":[
-                {"type":"Feature","properties":{"kind":"county","name":"Warren","state":"IA"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-93.7071,41.5133],[-93.3292,41.4914],[-93.3292,41.1627],[-93.5592,41.1627],[-93.6742,41.1627],[-93.7892,41.1627],[-93.7892,41.5133],[-93.7071,41.5133]]]]}}
-            ]},
-            {"type":"FeatureCollection","properties":{"kind":"state","state":"IA"},"features":[
-                {"type":"Feature","properties":{"kind":"county","name":"Madison","state":"IA"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-93.8221,41.5078],[-93.7892,41.5133],[-93.7892,41.1627],[-94.0138,41.1573],[-94.2438,41.1573],[-94.2438,41.5023],[-93.8221,41.5078]]]]}}
-            ]}
-        ];
-    });
-}(app));;(function (app) {
-    app.ns(app, 'AnswersModel', Backbone.Model.extend({
-        initialize: function () {  }
-    }));
-}(app));;(function (app) {
-    app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
-        model: app.AnswersModel,
-
-        initialize: function () {
-            this.loaded = $.Deferred();
-        },
-
-        fetch: function () {
-            var jqXHR = Backbone.Collection.prototype.fetch.apply(this, arguments);
-
-            jqXHR.done(this.loaded.resolve);
-            jqXHR.fail(this.loaded.reject);
-        },
-
-        parse: function(response) {
-            return response.items;
-        },
-        url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
-    }));
-}(app));;(function (app) {
-    var collection = new Backbone.Collection(),
-        loaded = collection.fetch({url: '/dummy-data.json'}),
+    var host = Backbone.history.location.hostname,
+        collection = new Backbone.Collection(),
+        loaded,
+        data = '/dummy-data.json',
+        endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
         mapLoaded = $.Deferred(),
         rects = [];
+
+    loaded = collection.fetch({url: endPointUrl});
 
     function convertLatLngToXy(latLng) {
         var projection = app.map.getProjection(),
