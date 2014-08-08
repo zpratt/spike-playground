@@ -7,7 +7,9 @@ module.exports = function(grunt) {
             'bower_components/lodash/dist/lodash.compat.min.js',
             'bower_components/backbone/backbone.js',
             'bower_components/react/react.min.js',
-            'bower_components/d3/d3.min.js'
+            'bower_components/d3/d3.min.js',
+            'bower_components/terraformer/terraformer.min.js',
+            'bower_components/proj4/dist/proj4.js'
         ],
         sharedProdDependencies = [
             'js/namespace.js',

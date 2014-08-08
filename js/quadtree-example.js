@@ -1,5 +1,8 @@
 (function (app) {
-    var host = Backbone.history.location.hostname,
+    var EPSG_4087 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
+        EPSG_4326 = '+proj=longlat +datum=WGS84 +no_defs',
+
+        host = Backbone.history.location.hostname,
         collection = new Backbone.Collection(),
         loaded,
         data = '/dummy-data.json',
@@ -10,11 +13,9 @@
     loaded = collection.fetch({url: endPointUrl});
 
     function convertLatLngToXy(latLng) {
-        var projection = app.map.getProjection(),
-            gLatLng = new google.maps.LatLng(latLng.lat, latLng.lng),
-            point = projection.fromLatLngToPoint(gLatLng);
+        var projectedPoint = proj4(EPSG_4326, EPSG_4087, [latLng.lng, latLng.lat]);
 
-        return {x: point.x, y: point.y};
+        return {x: projectedPoint[0], y: projectedPoint[1]};
     }
 
     function convertGoogleMapBoundsToXY(inputBounds) {
@@ -67,15 +68,36 @@
         return _.map(xyPoints, pointToArray);
     }
 
-    function pointInBounds(point, bounds) {
-        var projection = app.map.getProjection(),
-            latLng = projection.fromPointToLatLng(new google.maps.Point(point.x, point.y));
+    function bboxToPolygon(swPoint, nePoint) {
+        return new Terraformer.Polygon({
+            type:"Polygon",
+            coordinates:
+                [
+                    [
+                        [nePoint.x, nePoint.y],
+                        [swPoint.x, nePoint.y],
+                        [swPoint.x, swPoint.y],
+                        [nePoint.x, swPoint.y],
+                        [nePoint.x, nePoint.y]
+                    ]
+                ]
+        })
+    }
 
-        return bounds.contains(latLng);
+    function pointInBounds(point, bounds) {
+        var boundsPoints = convertGoogleMapBoundsToXY(bounds),
+            boundsPoly = bboxToPolygon(boundsPoints.sw, boundsPoints.ne),
+            latLng = new Terraformer.Point({
+                type:"Point",
+                coordinates:[point.x, point.y]
+            });
+
+        return boundsPoly.contains(latLng);
     }
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
+            PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
 
             pointsInBounds = _.filter(xyPoints, function (point) {
                 return pointInBounds(point, inputBounds)
@@ -83,7 +105,8 @@
 
         if (xyPoints.length === pointsInBounds.length) {
             quadtree = d3.geom.quadtree()
-                .extent([ [0, 0], [255, 255] ])
+//                .extent([ [0, 0], [255, 255] ])
+                .extent(PROJECTION_BOUNDS)
             (pointsToArray(pointsInBounds));
         } else {
             quadtree = d3.geom.quadtree(pointsInBounds);
@@ -97,11 +120,7 @@
     }
 
     function pointsToGoogleLatLngBounds(x1, y1, x2, y2) {
-        var projection = app.map.getProjection(),
-            swGeo = projection.fromPointToLatLng(new google.maps.Point(x1, y1)),
-            neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2));
-
-            return new google.maps.LatLngBounds(swGeo, neGeo);
+        return bboxToPolygon({x: x1, y: y1}, {x: x2, y: y2});
     }
 
     function flattenQuadtree(quadtree) {
@@ -114,9 +133,19 @@
         return nodes;
     }
 
-    function googleMapsRectangleFromBounds(bounds) {
+    function googleMapsRectangleFromBounds(inputBounds) {
+        var bounds = inputBounds.bbox(),
+            swCoords = [bounds[0], bounds[1]],
+            neCoords = [bounds[2], bounds[3]],
+
+            geoSwCoords = proj4(EPSG_4087, EPSG_4326, swCoords),
+            swGlatLng = new google.maps.LatLng(geoSwCoords[1], geoSwCoords[0]),
+
+            geoNeCoords = proj4(EPSG_4087, EPSG_4326, neCoords),
+            neGlatLng = new google.maps.LatLng(geoNeCoords[1], geoNeCoords[0]);
+
         return new google.maps.Rectangle({
-            bounds: bounds,
+            bounds: new google.maps.LatLngBounds(swGlatLng, neGlatLng),
             map: app.map,
             fillOpacity: 0
         });
@@ -133,15 +162,7 @@
     }
 
     function boundsContainedBy(innerBounds, outerBounds) {
-        var outerNe = outerBounds.ne,
-            outerSw = outerBounds.sw,
-            innerSw = innerBounds.sw,
-            innerNe = innerBounds.ne;
-
-        return outerNe.x >= innerNe.x &&
-            outerNe.y >= innerNe.y &&
-            outerSw.x <= innerSw.x &&
-            outerSw.y <= innerSw.y;
+        return outerBounds.contains(innerBounds);
     }
 
     function createAndRenderQuadtree(bounds) {
@@ -172,14 +193,15 @@
         });
 
         _.each(containingBoundsSet, function (childBounds) {
-            var xyBounds = convertGoogleMapBoundsToXY(childBounds);
+//            var xyBounds = convertGoogleMapBoundsToXY(childBounds);
 
             _.times(containingBoundsSet.length, function (index) {
                 var boundsComparedTo = containingBoundsSet[index];
 
                 if (boundsComparedTo.id != childBounds.id) {
-                    var containingXy = convertGoogleMapBoundsToXY(boundsComparedTo),
-                        isBoundsContained = boundsContainedBy(containingXy, xyBounds);
+                    var
+//                        containingXy = convertGoogleMapBoundsToXY(boundsComparedTo),
+                        isBoundsContained = boundsContainedBy(boundsComparedTo, childBounds);
 
                     if (isBoundsContained) {
                         if (boundsContainsBounds[childBounds.id]) {
@@ -192,9 +214,20 @@
             });
         });
 
+//        debugger;
+//        _.each(containingBoundsSet, function (bounds) {
+//            rects.push(googleMapsRectangleFromBounds(bounds));
+//        });
         _.each(boundsContainsBounds, function (value, key, boundsMapping) {
             if (!boundsMapping[value]) {
-                rects.push(googleMapsRectangleFromBounds(containingBoundsSet[value]));
+                if (_.isArray(value)) {
+                    _.each(value, function (cacheIndex) {
+                        rects.push(googleMapsRectangleFromBounds(containingBoundsSet[cacheIndex]));
+                    })
+                } else {
+                    rects.push(googleMapsRectangleFromBounds(containingBoundsSet[value]));
+                }
+
             }
         });
 
