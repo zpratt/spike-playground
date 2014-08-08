@@ -1,7 +1,12 @@
 (function (app) {
-    var collection = new Backbone.Collection(),
-        loaded = collection.fetch({url: '/dummy-data.json'}),
+    var host = Backbone.history.location.hostname,
+        collection = new Backbone.Collection(),
+        loaded,
+        data = '/dummy-data.json',
+        endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
         mapLoaded = $.Deferred();
+
+    loaded = collection.fetch({url: endPointUrl});
 
     Backbone.Events.on('map-loaded', function () {
         app.map.setCenter(new google.maps.LatLng(41.577060100767945, -93.90260298828126));
