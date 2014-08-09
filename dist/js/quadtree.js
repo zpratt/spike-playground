@@ -87,7 +87,10 @@
     });
 }
 google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
-    var host = Backbone.history.location.hostname,
+    var EPSG_4087 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
+        EPSG_4326 = '+proj=longlat +datum=WGS84 +no_defs',
+
+        host = Backbone.history.location.hostname,
         collection = new Backbone.Collection(),
         loaded,
         data = '/dummy-data.json',
@@ -98,11 +101,9 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
     loaded = collection.fetch({url: endPointUrl});
 
     function convertLatLngToXy(latLng) {
-        var projection = app.map.getProjection(),
-            gLatLng = new google.maps.LatLng(latLng.lat, latLng.lng),
-            point = projection.fromLatLngToPoint(gLatLng);
+        var projectedPoint = proj4(EPSG_4326, EPSG_4087, [latLng.lng, latLng.lat]);
 
-        return {x: point.x, y: point.y};
+        return {x: projectedPoint[0], y: projectedPoint[1]};
     }
 
     function convertGoogleMapBoundsToXY(inputBounds) {
@@ -155,15 +156,37 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
         return _.map(xyPoints, pointToArray);
     }
 
-    function pointInBounds(point, bounds) {
-        var projection = app.map.getProjection(),
-            latLng = projection.fromPointToLatLng(new google.maps.Point(point.x, point.y));
+    function bboxToPolygon(swPoint, nePoint) {
+        return new Terraformer.Polygon({
+            type:"Polygon",
+            coordinates:
+                [
+                    [
+                        [nePoint.x, nePoint.y],
+                        [swPoint.x, nePoint.y],
+                        [swPoint.x, swPoint.y],
+                        [nePoint.x, swPoint.y],
+                        [nePoint.x, nePoint.y]
+                    ]
+                ]
+        })
+    }
 
-        return bounds.contains(latLng);
+    function pointInBounds(point, bounds) {
+        var boundsPoints = convertGoogleMapBoundsToXY(bounds),
+            boundsPoly = bboxToPolygon(boundsPoints.sw, boundsPoints.ne),
+            latLng = new Terraformer.Point({
+                type:"Point",
+                coordinates:[point.x, point.y]
+            });
+
+        return boundsPoly.contains(latLng);
     }
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
+            xyBounds = convertGoogleMapBoundsToXY(inputBounds),
+            PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
 
             pointsInBounds = _.filter(xyPoints, function (point) {
                 return pointInBounds(point, inputBounds)
@@ -171,11 +194,11 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
 
         if (xyPoints.length === pointsInBounds.length) {
             quadtree = d3.geom.quadtree()
-                .extent([ [0, 0], [255, 255] ])
+                .extent(PROJECTION_BOUNDS)
+//                .extent([[xyBounds.sw.x, xyBounds.sw.y], [xyBounds.ne.x, xyBounds.ne.y]])
             (pointsToArray(pointsInBounds));
         } else {
             quadtree = d3.geom.quadtree(pointsInBounds);
-
         }
 
         updateNodes(quadtree);
@@ -185,11 +208,7 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
     }
 
     function pointsToGoogleLatLngBounds(x1, y1, x2, y2) {
-        var projection = app.map.getProjection(),
-            swGeo = projection.fromPointToLatLng(new google.maps.Point(x1, y1)),
-            neGeo = projection.fromPointToLatLng(new google.maps.Point(x2, y2));
-
-            return new google.maps.LatLngBounds(swGeo, neGeo);
+        return bboxToPolygon({x: x1, y: y1}, {x: x2, y: y2});
     }
 
     function flattenQuadtree(quadtree) {
@@ -202,9 +221,27 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
         return nodes;
     }
 
-    function googleMapsRectangleFromBounds(bounds) {
+    function boundingBoxToExtent(inputBounds) {
+        var bounds = inputBounds.bbox();
+        return [[bounds[0], bounds[1]], [bounds[2], bounds[3]]];
+    }
+
+    function projectedCoordinatePairToGoogleLatLng(coordinates) {
+        var geographicCoords = proj4(EPSG_4087, EPSG_4326, coordinates);
+
+        return new google.maps.LatLng(geographicCoords[1], geographicCoords[0]);
+    }
+
+    function googleMapsRectangleFromBounds(inputBounds) {
+        var bounds = boundingBoxToExtent(inputBounds),
+            swCoords = bounds[0],
+            neCoords = bounds[1],
+
+            swGlatLng = projectedCoordinatePairToGoogleLatLng(swCoords),
+            neGlatLng = projectedCoordinatePairToGoogleLatLng(neCoords);
+
         return new google.maps.Rectangle({
-            bounds: bounds,
+            bounds: new google.maps.LatLngBounds(swGlatLng, neGlatLng),
             map: app.map,
             fillOpacity: 0
         });
@@ -221,23 +258,25 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
     }
 
     function boundsContainedBy(innerBounds, outerBounds) {
-        var outerNe = outerBounds.ne,
-            outerSw = outerBounds.sw,
-            innerSw = innerBounds.sw,
-            innerNe = innerBounds.ne;
+        var innerBoundsCoords = boundingBoxToExtent(innerBounds),
+            outerBoundsCoords = boundingBoxToExtent(outerBounds),
 
-        return outerNe.x >= innerNe.x &&
-            outerNe.y >= innerNe.y &&
-            outerSw.x <= innerSw.x &&
-            outerSw.y <= innerSw.y;
+            outerNeCoords = outerBoundsCoords[1],
+            outerSwCoords = outerBoundsCoords[0],
+            innerNeCoords = innerBoundsCoords[1],
+            innerSwCoords = innerBoundsCoords[0];
+
+        return outerNeCoords[0] >= innerNeCoords[0] &&
+            outerNeCoords[1] >= innerNeCoords[1] &&
+            outerSwCoords[0] <= innerSwCoords[0] &&
+            outerSwCoords[1] <= innerSwCoords[1];
     }
 
     function createAndRenderQuadtree(bounds) {
         var xyPoints = collectionToXyPoints(),
             quadtree = createQuadTree(xyPoints, bounds),
             nodes = flattenQuadtree(quadtree),
-
-            boundsContainsBounds = {},
+            groupsToRender,
 
             containingBoundsSet;
 
@@ -259,35 +298,24 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
             return xyBounds;
         });
 
-        _.each(containingBoundsSet, function (childBounds) {
-            var xyBounds = convertGoogleMapBoundsToXY(childBounds);
+        groupsToRender = _.filter(containingBoundsSet, function (outerBounds) {
+            var containsOthers = false;
 
-            _.times(containingBoundsSet.length, function (index) {
-                var boundsComparedTo = containingBoundsSet[index];
-
-                if (boundsComparedTo.id != childBounds.id) {
-                    var containingXy = convertGoogleMapBoundsToXY(boundsComparedTo),
-                        isBoundsContained = boundsContainedBy(containingXy, xyBounds);
-
-                    if (isBoundsContained) {
-                        if (boundsContainsBounds[childBounds.id]) {
-                            boundsContainsBounds[childBounds.id].push(boundsComparedTo.id);
-                        } else {
-                            boundsContainsBounds[childBounds.id] = [boundsComparedTo.id];
-                        }
-                    }
+            _.each(containingBoundsSet, function (innerBounds) {
+                if (boundsContainedBy(innerBounds, outerBounds) && outerBounds.id != innerBounds.id) {
+                    containsOthers = true;
                 }
+                return !containsOthers;
             });
+
+            return !containsOthers;
         });
 
-        _.each(boundsContainsBounds, function (value, key, boundsMapping) {
-            if (!boundsMapping[value]) {
-                rects.push(googleMapsRectangleFromBounds(containingBoundsSet[value]));
-            }
+        _.each(groupsToRender, function (childBounds) {
+            rects.push(googleMapsRectangleFromBounds(childBounds));
         });
 
         app.containingBounds = containingBoundsSet;
-        app.boundsContainsBounds = boundsContainsBounds;
 
         return quadtree;
     }
