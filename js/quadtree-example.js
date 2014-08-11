@@ -8,7 +8,9 @@
         data = '/dummy-data.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
         mapLoaded = $.Deferred(),
-        rects = [];
+        rects = [],
+        markers = {},
+        groupMarkers = {};
 
     loaded = collection.fetch({url: endPointUrl});
 
@@ -97,7 +99,7 @@
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-            xyBounds = convertGoogleMapBoundsToXY(inputBounds),
+//            xyBounds = convertGoogleMapBoundsToXY(inputBounds),
             PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
 
             pointsInBounds = _.filter(xyPoints, function (point) {
@@ -119,15 +121,19 @@
 
     }
 
-    function pointsToGoogleLatLngBounds(x1, y1, x2, y2) {
+    function pointsToPolygon(x1, y1, x2, y2) {
         return bboxToPolygon({x: x1, y: y1}, {x: x2, y: y2});
     }
 
     function flattenQuadtree(quadtree) {
-        var nodes = [];
+        var nodes = {},
+            nodeId = 0;
 
         quadtree.visit(function (node) {
-            nodes.push(node);
+            node.id = nodeId;
+            nodes[nodeId] = node;
+
+            nodeId += 1;
         });
 
         return nodes;
@@ -144,7 +150,7 @@
         return new google.maps.LatLng(geographicCoords[1], geographicCoords[0]);
     }
 
-    function googleMapsRectangleFromBounds(inputBounds) {
+    function polygonToGoogleLatLngBounds(inputBounds) {
         var bounds = boundingBoxToExtent(inputBounds),
             swCoords = bounds[0],
             neCoords = bounds[1],
@@ -152,8 +158,12 @@
             swGlatLng = projectedCoordinatePairToGoogleLatLng(swCoords),
             neGlatLng = projectedCoordinatePairToGoogleLatLng(neCoords);
 
+        return new google.maps.LatLngBounds(swGlatLng, neGlatLng);
+    }
+
+    function googleMapsRectangleFromBounds(inputBounds) {
         return new google.maps.Rectangle({
-            bounds: new google.maps.LatLngBounds(swGlatLng, neGlatLng),
+            bounds: polygonToGoogleLatLngBounds(inputBounds),
             map: app.map,
             fillOpacity: 0
         });
@@ -170,6 +180,8 @@
     }
 
     function boundsContainedBy(innerBounds, outerBounds) {
+        var X_COORD = 0;
+        var Y_COORD = 1;
         var innerBoundsCoords = boundingBoxToExtent(innerBounds),
             outerBoundsCoords = boundingBoxToExtent(outerBounds),
 
@@ -178,10 +190,10 @@
             innerNeCoords = innerBoundsCoords[1],
             innerSwCoords = innerBoundsCoords[0];
 
-        return outerNeCoords[0] >= innerNeCoords[0] &&
-            outerNeCoords[1] >= innerNeCoords[1] &&
-            outerSwCoords[0] <= innerSwCoords[0] &&
-            outerSwCoords[1] <= innerSwCoords[1];
+        return outerNeCoords[X_COORD] >= innerNeCoords[X_COORD] &&
+            outerNeCoords[Y_COORD] >= innerNeCoords[Y_COORD] &&
+            outerSwCoords[X_COORD] <= innerSwCoords[X_COORD] &&
+            outerSwCoords[Y_COORD] <= innerSwCoords[Y_COORD];
     }
 
     function createAndRenderQuadtree(bounds) {
@@ -196,16 +208,16 @@
             rect.setMap(null);
         });
 
-        containingBoundsSet = _.map(getContainingBounds(nodes), function (node, index) {
+        containingBoundsSet = _.map(getContainingBounds(nodes), function (node) {
             var nodeBounds = node.bounds,
-                xyBounds = pointsToGoogleLatLngBounds(
+                xyBounds = pointsToPolygon(
                     nodeBounds.x1,
                     nodeBounds.y1,
                     nodeBounds.x2,
                     nodeBounds.y2
                 );
 
-            xyBounds.id = index;
+            xyBounds.id = node.id;
 
             return xyBounds;
         });
@@ -224,6 +236,12 @@
         });
 
         _.each(groupsToRender, function (childBounds) {
+            var nodesInChildBounds = _.compact(nodes[childBounds.id].nodes);
+
+            _.each(nodesInChildBounds, function (nodeToHide) {
+                Backbone.Events.trigger('hide-marker', {point: {x: nodeToHide.x, y: nodeToHide.y}, bounds: childBounds});
+            });
+
             rects.push(googleMapsRectangleFromBounds(childBounds));
         });
 
@@ -232,25 +250,69 @@
         return quadtree;
     }
 
+    function createMarkerForGroup(bounds) {
+        var center;
+
+        if (!groupMarkers[bounds.id]) {
+            center = polygonToGoogleLatLngBounds(bounds).getCenter();
+
+            groupMarkers[bounds.id] = new google.maps.Marker({
+                position: center,
+                map: app.map,
+                title: 'group ' + bounds.id,
+                opacity: .5
+            });
+        }
+    }
+
+    function resetGroupMarkerCache() {
+        _.each(groupMarkers, function (marker) {
+            marker.setMap(null);
+        });
+
+        groupMarkers = {};
+    }
+
     Backbone.Events.on('map-loaded', function () {
         mapLoaded.resolve();
+    });
+
+    Backbone.Events.on('hide-marker', function (nodeToHide) {
+        var model = collection.where({x_coord: nodeToHide.point.x, y_coord: nodeToHide.point.y})[0];
+
+//        markers[model.id].setMap(null);
+        markers[model.id].setOpacity(.2);
+
+        createMarkerForGroup(nodeToHide.bounds);
     });
 
     $.when(mapLoaded, loaded).done(function () {
         var quadtree;
 
-        Backbone.Events.on('zoom-change', function (bounds) {
-            createAndRenderQuadtree(bounds);
-        });
+        Backbone.Events.on('bounds-change', _.debounce(function (bounds) {
+            resetGroupMarkerCache();
 
-        Backbone.Events.on('bounds-change', function (bounds) {
+            _.each(markers, function (marker) {
+//                marker.setMap(app.map);
+                marker.setOpacity(1.0);
+            });
+
             createAndRenderQuadtree(bounds);
-        });
+
+        }), 500);
 
         collection.each(function (item) {
+            var point = convertLatLngToXy(item.attributes.location);
+
+            item.set('x_coord', point.x);
+            item.set('y_coord', point.y);
+
             var marker = new google.maps.Marker({
-                position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng)
+                position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),
+                title: item.attributes.name
             });
+
+            markers[item.id] = marker;
 
             marker.setMap(app.map);
         });
