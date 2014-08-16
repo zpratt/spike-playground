@@ -179,16 +179,11 @@
 }(app));
 (function (app) {
 
-    function gMapProjectionTransform(projection, extents) {
-        var dx = extents.sw.x,
-            dy = extents.ne.y;
-
-        return function (coordinates) {
-            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]),
-                pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
-
-            return [pixelCoordinates.x - dx, pixelCoordinates.y - dy];
-        }
+    function getMercatorProjection(centerPoint, extents) {
+        return d3.geo.mercator()
+                .center([centerPoint.lng(), centerPoint.lat()])
+                .translate([extents.width / 2, extents.height / 2])
+                .scale(5200);
     }
 
     function getBoundsPoints(bounds) {
@@ -205,14 +200,14 @@
     }
 
     function convertFeatureToBounds(data) {
-        return d3.geo.bounds(data);
+        return getBoundsPoints(d3.geo.bounds(data));
     }
 
-    function createPolygonWith(element, extents, projection) {
-        var path = d3.geo.path().projection(gMapProjectionTransform(projection, extents)),
+    function createPolygonWith(geojson, element, extents, projection) {
+        var path = d3.geo.path().projection(projection),
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
-                        '<line x1="0" y1="0" x2="0" y2="10"/> ' +
-                        '</pattern>',
+                '<line x1="0" y1="0" x2="0" y2="10"/> ' +
+                '</pattern>',
 
             svg = d3.select(element).append('svg');
 
@@ -221,13 +216,35 @@
         svg
             .attr('viewBox', '0 0 ' + extents.width + ' ' + extents.height)
             .selectAll('path')
-            .data(this._data.features)
+            .data(geojson.features)
             .enter()
             .append('path')
             .attr('d', path)
             .attr('fill', 'url(#diagonalHatch)');
 
         return svg;
+    }
+
+    app.ns(app, 'SvgBoundaryFactory', {
+        create: createPolygonWith,
+        convertBounds: convertFeatureToBounds
+    });
+
+}(app));
+(function (app) {
+
+    var SvgFactory = app.SvgBoundaryFactory;
+
+    function gMapProjectionTransform(projection, extents) {
+        var dx = extents.sw.x,
+            dy = extents.ne.y;
+
+        return function (coordinates) {
+            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]),
+                pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
+
+            return [pixelCoordinates.x - dx, pixelCoordinates.y - dy];
+        }
     }
 
     function getGoogleLatLngBounds(bounds) {
@@ -265,7 +282,7 @@
         this._div.className = 'ground-overlay-view';
 
         this._data = data;
-        this._bounds = getGoogleLatLngBounds(getBoundsPoints(convertFeatureToBounds(this._data)));
+        this._bounds = getGoogleLatLngBounds(SvgFactory.convertBounds(this._data));
         this._svg = null;
 
         this.setMap(map);
@@ -298,7 +315,7 @@
                 this._svg.attr('width', extents.width);
                 this._svg.attr('height', extents.height);
             } else {
-                this._svg = createPolygonWith.call(this, fragment, extents, overlayProjection);
+                this._svg = SvgFactory.create(this._data, fragment, extents, gMapProjectionTransform(overlayProjection, extents));
                 this._data = null;
                 this._div.appendChild(fragment);
             }
