@@ -24,8 +24,6 @@
         _.each(counties, function (county) {
             createGroundOverlay(county);
         });
-
-
     });
 
 }(app));
