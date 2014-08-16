@@ -36,7 +36,8 @@
     };
 
 }(this));
-;(function (app) {
+
+(function (app) {
     app.ns(app, 'AnswersModel', Backbone.Model.extend({
         defaults: {
             'x_coord': 0,
@@ -45,7 +46,8 @@
 
         initialize: function () {  }
     }));
-}(app));;(function (app) {
+}(app));
+(function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
@@ -65,33 +67,37 @@
         },
         url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
     }));
-}(app));;function initialize() {
-    var mapOptions = {
-        center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
-        zoom: 7
-    };
-    var map = new google.maps.Map(document.getElementById("map-canvas"),
-        mapOptions);
+}(app));
+(function (app) {
+    function initialize() {
+        var mapOptions = {
+            center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
+            zoom: 7
+        };
+        var map = new google.maps.Map(document.getElementById("map-canvas"),
+            mapOptions);
 
-    app.ns(app, 'map', map);
+        app.ns(app, 'map', map);
 
-    google.maps.event.addListener(map, 'idle', function () {
-        Backbone.Events.trigger('map-idle');
-    });
+        google.maps.event.addListener(map, 'idle', function () {
+            Backbone.Events.trigger('map-idle');
+        });
 
-    google.maps.event.addListener(map, 'zoom_changed', function () {
-        Backbone.Events.trigger('zoom-change', map.getBounds());
-    });
+        google.maps.event.addListener(map, 'zoom_changed', function () {
+            Backbone.Events.trigger('zoom-change', map.getBounds());
+        });
 
-    google.maps.event.addListener(map, 'bounds_changed', function () {
-        Backbone.Events.trigger('bounds-change', map.getBounds());
-    });
+        google.maps.event.addListener(map, 'bounds_changed', function () {
+            Backbone.Events.trigger('bounds-change', map.getBounds());
+        });
 
-    google.maps.event.addListenerOnce(map, 'idle', function () {
-        Backbone.Events.trigger('map-loaded');
-    });
-}
-google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
+        google.maps.event.addListenerOnce(map, 'idle', function () {
+            Backbone.Events.trigger('map-loaded');
+        });
+    }
+    google.maps.event.addDomListener(window, 'load', initialize);
+}(app));
+(function (app) {
     var EPSG_4087 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
         EPSG_4326 = '+proj=longlat +datum=WGS84 +no_defs',
 

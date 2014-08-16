@@ -36,7 +36,8 @@
     };
 
 }(this));
-;(function (app) {
+
+(function (app) {
     app.ns(app, 'AnswersModel', Backbone.Model.extend({
         defaults: {
             'x_coord': 0,
@@ -45,7 +46,8 @@
 
         initialize: function () {  }
     }));
-}(app));;(function (app) {
+}(app));
+(function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
@@ -65,7 +67,8 @@
         },
         url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
     }));
-}(app));;(function (app) {
+}(app));
+(function (app) {
     app.ns(app, 'IowaGeoJson', function () {
         return [
             {"type":"FeatureCollection","properties":{"kind":"state","state":"IA"},"features":[
@@ -82,33 +85,37 @@
             ]}
         ];
     });
-}(app));;function initialize() {
-    var mapOptions = {
-        center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
-        zoom: 7
-    };
-    var map = new google.maps.Map(document.getElementById("map-canvas"),
-        mapOptions);
+}(app));
+(function (app) {
+    function initialize() {
+        var mapOptions = {
+            center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
+            zoom: 7
+        };
+        var map = new google.maps.Map(document.getElementById("map-canvas"),
+            mapOptions);
 
-    app.ns(app, 'map', map);
+        app.ns(app, 'map', map);
 
-    google.maps.event.addListener(map, 'idle', function () {
-        Backbone.Events.trigger('map-idle');
-    });
+        google.maps.event.addListener(map, 'idle', function () {
+            Backbone.Events.trigger('map-idle');
+        });
 
-    google.maps.event.addListener(map, 'zoom_changed', function () {
-        Backbone.Events.trigger('zoom-change', map.getBounds());
-    });
+        google.maps.event.addListener(map, 'zoom_changed', function () {
+            Backbone.Events.trigger('zoom-change', map.getBounds());
+        });
 
-    google.maps.event.addListener(map, 'bounds_changed', function () {
-        Backbone.Events.trigger('bounds-change', map.getBounds());
-    });
+        google.maps.event.addListener(map, 'bounds_changed', function () {
+            Backbone.Events.trigger('bounds-change', map.getBounds());
+        });
 
-    google.maps.event.addListenerOnce(map, 'idle', function () {
-        Backbone.Events.trigger('map-loaded');
-    });
-}
-google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
+        google.maps.event.addListenerOnce(map, 'idle', function () {
+            Backbone.Events.trigger('map-loaded');
+        });
+    }
+    google.maps.event.addDomListener(window, 'load', initialize);
+}(app));
+(function (app) {
 
     function createSvg(element, width, height) {
         return d3.select(element).append('svg')
@@ -169,7 +176,8 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
         graph: graph
     });
 
-}(app));;(function (app) {
+}(app));
+(function (app) {
 
     function gMapProjectionTransform(projection, extents) {
         var dx = extents.sw.x,
@@ -300,7 +308,8 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
 
     app.ns(app, 'GroundViewOverlay', GroundOverlay);
 
-}(app));;(function (app) {
+}(app));
+(function (app) {
     var host = Backbone.history.location.hostname,
         collection = new Backbone.Collection(),
         loaded,
@@ -326,8 +335,6 @@ google.maps.event.addDomListener(window, 'load', initialize);;(function (app) {
         _.each(counties, function (county) {
             createGroundOverlay(county);
         });
-
-
     });
 
 }(app));
