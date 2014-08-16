@@ -31,6 +31,12 @@
 
     function createPolygonWith(element, extents, projection) {
         var path = d3.geo.path().projection(gMapProjectionTransform(projection, extents)),
+//        var center = this._bounds.getCenter(),
+//            mercator = d3.geo.mercator()
+//                .center([center.lng(), center.lat()])
+//                .translate([extents.width/2, extents.height/2])
+//                .scale(5200),
+//            path = d3.geo.path().projection(mercator),
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
                         '<line x1="0" y1="0" x2="0" y2="10"/> ' +
                         '</pattern>',
