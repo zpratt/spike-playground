@@ -23,6 +23,7 @@ module.exports = function(grunt) {
             'js/iowa.js',
             'js/map.js',
             'js/donut-graph.js',
+            'js/svg-boundary.js',
             'js/ground-view.js',
             'js/ground-view-example.js'
         ],
