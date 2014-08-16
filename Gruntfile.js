@@ -52,7 +52,8 @@ module.exports = function(grunt) {
                     ignoreMTime: false
                 },
                 files: {
-                    'js/view.js' : 'jsx/*.jsx'
+                    'js/view.js' : ['jsx/answer-item-view.jsx', 'jsx/answer-list-view.jsx'],
+                    'js/experiment.js': 'jsx/experiment.jsx'
                 }
             }
         },
@@ -65,38 +66,29 @@ module.exports = function(grunt) {
         },
         concat: {
             options: {
-                separator: ';'
+                sourceMap: true
             },
             thirdparty: {
+                options: {
+                    sourceMap: false
+                },
                 src: thirdPartyDependencies,
                 dest: 'dist/js/deps.js'
             },
             quadtreeExample: {
-                options: {
-                    sourceMap: true
-                },
                 src: _.union(sharedProdDependencies, quadtreeExample),
                 dest: 'dist/js/quadtree.js'
             },
             reactExample: {
-                options: {
-                    sourceMap: true
-                },
                 src: _.union(sharedProdDependencies, reactExample),
                 dest: 'dist/js/react.js'
             },
             svgBoundaryExample: {
-                options: {
-                    sourceMap: true
-                },
                 src: _.union(sharedProdDependencies, boundaryExample),
                 dest: 'dist/js/svg-boundary.js'
             },
             experiment: {
-                options: {
-                    sourceMap: true
-                },
-                src: _.union(sharedProdDependencies, ['js/collection-experiment.js']),
+                src: _.union(sharedProdDependencies, ['js/map.js', 'js/composite-marker.js', 'js/experiment.js']),
                 dest: 'dist/js/experiment.js'
             }
         },
