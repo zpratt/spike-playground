@@ -225,6 +225,33 @@
         return projection;
     }
 
+    function rawCoordinateToPoint(projection, coordinate) {
+        var latLng = new google.maps.LatLng(coordinate.lat, coordinate.lng);
+
+        return projection.fromLatLngToDivPixel(latLng)
+    }
+
+    function bboxToDxDy(projection, bbox) {
+        var dx = rawCoordinateToPoint(projection, bbox.sw).x,
+            dy = rawCoordinateToPoint(projection, bbox.ne).y;
+
+        return {
+            dx: dx,
+            dy: dy
+        }
+    }
+
+    function getGoogleOverlayViewProjection(overlayViewProjection, bbox) {
+        var boundsXy = bboxToDxDy(overlayViewProjection, bbox);
+
+        return function (coordinates) {
+            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]),
+                pixelCoordinates = overlayViewProjection.fromLatLngToDivPixel(googleCoordinates);
+
+            return [pixelCoordinates.x - boundsXy.dx, pixelCoordinates.y - boundsXy.dy];
+        }
+    }
+
     function getBoundsPoints(bounds) {
         return {
             sw: {
@@ -242,7 +269,7 @@
         return getBoundsPoints(d3.geo.bounds(data));
     }
 
-    function createPolygonWith(geojson, element, extents, projection) {
+    function createPolygonWith(geojson, element, dimensions, projection) {
         var path = d3.geo.path().projection(projection),
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
                 '<line x1="0" y1="0" x2="0" y2="10"/> ' +
@@ -253,7 +280,7 @@
         svg.append('defs').html(pattern);
 
         svg
-            .attr('viewBox', '0 0 ' + extents.width + ' ' + extents.height)
+            .attr('viewBox', '0 0 ' + dimensions.width + ' ' + dimensions.height)
             .selectAll('path')
             .data(geojson.features)
             .enter()
@@ -267,25 +294,13 @@
     app.ns(app, 'SvgBoundaryFactory', {
         create: createPolygonWith,
         convertBounds: convertFeatureToBounds,
-        getProjection: getMercatorProjection
+        getMercatorProjection: getMercatorProjection,
+        getOverlayViewProjection: getGoogleOverlayViewProjection
     });
 
 }(app));
+
 (function (app) {
-
-    var SvgFactory = app.SvgBoundaryFactory;
-
-    function gMapProjectionTransform(projection, extents) {
-        var dx = extents.sw.x,
-            dy = extents.ne.y;
-
-        return function (coordinates) {
-            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]),
-                pixelCoordinates = projection.fromLatLngToDivPixel(googleCoordinates);
-
-            return [pixelCoordinates.x - dx, pixelCoordinates.y - dy];
-        }
-    }
 
     function getGoogleLatLngBounds(bounds) {
         var swPoint = new google.maps.LatLng(bounds.sw.lat, bounds.sw.lng),
@@ -294,16 +309,20 @@
         return new google.maps.LatLngBounds(swPoint, nePoint);
     }
 
-    function getExtents(projection) {
+    function getBboxXy(projection) {
         var southWestPoint = projection.fromLatLngToDivPixel(this._bounds.getSouthWest()),
             northEastPoint = projection.fromLatLngToDivPixel(this._bounds.getNorthEast());
 
         return {
             sw: southWestPoint,
-            ne: northEastPoint,
+            ne: northEastPoint
+        }
+    }
 
-            width: northEastPoint.x - southWestPoint.x,
-            height: southWestPoint.y - northEastPoint.y
+    function calculateDimensions(bboxPixels) {
+        return {
+            width: bboxPixels.ne.x - bboxPixels.sw.x,
+            height: bboxPixels.sw.y - bboxPixels.ne.y
         }
     }
 
@@ -317,15 +336,11 @@
         div.style.height = height + 'px';
     }
 
-    function GroundOverlay (map, data) {
-        this._div = document.createElement('div');
+    function GroundOverlay (element, bounds) {
+        this._div = element;
         this._div.className = 'ground-overlay-view';
-
-        this._data = data;
-        this._bounds = getGoogleLatLngBounds(SvgFactory.convertBounds(data));
-        this._svg = null;
-
-        this.setMap(map);
+        this._bounds = getGoogleLatLngBounds(bounds);
+        this.isInDom = $.Deferred();
     }
 
     GroundOverlay.prototype = new google.maps.OverlayView();
@@ -339,35 +354,27 @@
 
         draw: function () {
             var overlayProjection = this.getProjection(),
-                fragment = document.createDocumentFragment(),
                 extents,
-                width,
-                height;
+                dimensions;
 
-            extents = getExtents.call(this, overlayProjection);
-            width = extents.width;
-            height = extents.height;
+            extents = getBboxXy.call(this, overlayProjection);
+            dimensions = calculateDimensions(extents);
 
             setTopLeftFor(this._div, extents.sw, extents.ne);
-            setHeightAndWidthFor(this._div, width, height);
+            setHeightAndWidthFor(this._div, dimensions.width, dimensions.height);
 
-            if (this._svg) {
-                this._svg.attr('width', extents.width);
-                this._svg.attr('height', extents.height);
-            } else {
-                this._svg = SvgFactory.create(this._data, fragment, extents, gMapProjectionTransform(overlayProjection, extents));
-                this._data = null;
-                this._div.appendChild(fragment);
-            }
-
+            this.isInDom.resolve(dimensions);
         }
     });
 
     app.ns(app, 'GroundViewOverlay', GroundOverlay);
 
 }(app));
+
 (function (app) {
-    var host = Backbone.history.location.hostname,
+    var SvgFactory = app.SvgBoundaryFactory,
+
+        host = Backbone.history.location.hostname,
         collection = new Backbone.Collection(),
         loaded,
         data = '/dummy-data.json',
@@ -376,23 +383,40 @@
 
     loaded = collection.fetch({url: endPointUrl});
 
-    Backbone.Events.on('map-loaded', function () {
+    Backbone.Events.once('map-loaded', function () {
         app.map.setCenter(new google.maps.LatLng(41.577060100767945, -93.90260298828126));
 
         mapLoaded.resolve();
     });
 
     function createGroundOverlay(county) {
-        return new app.GroundViewOverlay(app.map, county);
+        var element = document.createElement('div'),
+            bounds = SvgFactory.convertBounds(county),
+            view = new app.GroundViewOverlay(element, bounds);
+
+        view.isInDom.done(function (dimensions) {
+            SvgFactory.create(
+                county,
+                element,
+                {height: dimensions.height, width: dimensions.width},
+                SvgFactory.getOverlayViewProjection(view.getProjection(), bounds)
+            );
+        });
+
+        return view;
     }
 
     $.when(mapLoaded, loaded).done(function () {
-        var counties = app.IowaGeoJson();
+        var counties = app.IowaGeoJson(),
+            views = [];
 
         _.each(counties, function (county) {
-            createGroundOverlay(county);
+            views.push(createGroundOverlay(county));
         });
+
+        _.invoke(views, 'setMap', app.map);
     });
 
 }(app));
+
 //# sourceMappingURL=svg-boundary.js.map

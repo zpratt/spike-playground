@@ -115,12 +115,9 @@
 
     _.extend(CompositeMarker.prototype, {
         onAdd: function () {
-            var panes = this.getPanes(),
-                $overlayLayer = $(panes.overlayLayer);
+            var panes = this.getPanes();
 
-            if (0 === $overlayLayer.find('.composite-marker').length) {
-                panes.overlayLayer.appendChild(this._element);
-            }
+            panes.overlayLayer.appendChild(this._element);
         },
 
         draw: function () {
@@ -133,11 +130,24 @@
 
     app.ns(app, 'CompositeMarker', CompositeMarker);
 }(app));
+
 /** @jsx React.DOM */
 (function (app) {
     'use strict';
 
-    Backbone.Events.on('map-idle', function () {
+    var mapIdleDeferred;
+
+    function init() {
+        mapIdleDeferred = $.Deferred();
+
+        Backbone.Events.once('map-idle', function () {
+            mapIdleDeferred.resolve();
+        });
+
+        mapIdleDeferred.done(main);
+    }
+
+    function main() {
         var element = document.createElement('div'),
             ContentView,
 
@@ -162,7 +172,9 @@
         React.renderComponent(ContentView({name: 'Hello World'}), element);
 
         marker.setMap(app.map);
-    });
+    }
+
+    init();
 }(app));
 
 //# sourceMappingURL=experiment.js.map
