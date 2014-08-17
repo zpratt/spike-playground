@@ -4,7 +4,7 @@
     function renderBoundary(boundary, element, dimensions) {
         var boundarySvg,
 
-            projection = SvgFactory.getProjection(boundary, dimensions);
+            projection = SvgFactory.getMercatorProjection(boundary, dimensions);
 
         boundarySvg = SvgFactory.create(boundary, element, dimensions, projection);
 
