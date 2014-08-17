@@ -8,7 +8,9 @@ Also, experimenting with d3 and google maps.
 ## To view examples:
 
 * [react+backbone example](http://zpratt.github.io/spike-playground/index.html)
-* [svg boundary example](http://zpratt.github.io/spike-playground/map.html)
+* [react+google maps example](http://zpratt.github.io/spike-playground/experiment.html)
+* [svg boundary + google maps example](http://zpratt.github.io/spike-playground/map.html)
+* [svg boundary + as a list](http://zpratt.github.io/spike-playground/boundary-list.html)
 * [quadtree example](http://zpratt.github.io/spike-playground/quadtree.html)
 
 ## To run locally:
