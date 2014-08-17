@@ -15,7 +15,9 @@
     });
 
     function createGroundOverlay(county) {
-        return new app.GroundViewOverlay(app.map, county);
+        var element = document.createElement('div');
+
+        return new app.GroundViewOverlay(app.map, element, county);
     }
 
     $.when(mapLoaded, loaded).done(function () {

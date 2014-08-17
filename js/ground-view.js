@@ -44,8 +44,8 @@
         div.style.height = height + 'px';
     }
 
-    function GroundOverlay (map, data) {
-        this._div = document.createElement('div');
+    function GroundOverlay (map, element, data) {
+        this._div = element;
         this._div.className = 'ground-overlay-view';
 
         this._data = data;
