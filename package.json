@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "grunt"
+    "test": "grunt",
+    "start": "node_modules/.bin/http-server"
   },
   "repository": {
     "type": "git",
@@ -15,14 +16,16 @@
   },
   "keywords": [
     "react",
-    "backbone"
+    "backbone",
+    "google",
+    "d3"
   ],
   "author": "zach pratt <zach@attackofzach.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zpratt/spike-react-backbone/issues"
+    "url": "https://github.com/zpratt/spike-playground/issues"
   },
-  "homepage": "https://github.com/zpratt/spike-react-backbone",
+  "homepage": "https://github.com/zpratt/spike-playground",
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^0.6.0",

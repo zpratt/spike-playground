@@ -16,12 +16,9 @@
 
     _.extend(CompositeMarker.prototype, {
         onAdd: function () {
-            var panes = this.getPanes(),
-                $overlayLayer = $(panes.overlayLayer);
+            var panes = this.getPanes();
 
-            if (0 === $overlayLayer.find('.composite-marker').length) {
-                panes.overlayLayer.appendChild(this._element);
-            }
+            panes.overlayLayer.appendChild(this._element);
         },
 
         draw: function () {

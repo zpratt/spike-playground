@@ -46,6 +46,33 @@
         return projection;
     }
 
+    function rawCoordinateToPoint(projection, coordinate) {
+        var latLng = new google.maps.LatLng(coordinate.lat, coordinate.lng);
+
+        return projection.fromLatLngToDivPixel(latLng)
+    }
+
+    function bboxToDxDy(projection, bbox) {
+        var dx = rawCoordinateToPoint(projection, bbox.sw).x,
+            dy = rawCoordinateToPoint(projection, bbox.ne).y;
+
+        return {
+            dx: dx,
+            dy: dy
+        }
+    }
+
+    function getGoogleOverlayViewProjection(overlayViewProjection, bbox) {
+        var boundsXy = bboxToDxDy(overlayViewProjection, bbox);
+
+        return function (coordinates) {
+            var googleCoordinates = new google.maps.LatLng(coordinates[1], coordinates[0]),
+                pixelCoordinates = overlayViewProjection.fromLatLngToDivPixel(googleCoordinates);
+
+            return [pixelCoordinates.x - boundsXy.dx, pixelCoordinates.y - boundsXy.dy];
+        }
+    }
+
     function getBoundsPoints(bounds) {
         return {
             sw: {
@@ -63,7 +90,7 @@
         return getBoundsPoints(d3.geo.bounds(data));
     }
 
-    function createPolygonWith(geojson, element, extents, projection) {
+    function createPolygonWith(geojson, element, dimensions, projection) {
         var path = d3.geo.path().projection(projection),
             pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
                 '<line x1="0" y1="0" x2="0" y2="10"/> ' +
@@ -74,7 +101,7 @@
         svg.append('defs').html(pattern);
 
         svg
-            .attr('viewBox', '0 0 ' + extents.width + ' ' + extents.height)
+            .attr('viewBox', '0 0 ' + dimensions.width + ' ' + dimensions.height)
             .selectAll('path')
             .data(geojson.features)
             .enter()
@@ -88,7 +115,8 @@
     app.ns(app, 'SvgBoundaryFactory', {
         create: createPolygonWith,
         convertBounds: convertFeatureToBounds,
-        getProjection: getMercatorProjection
+        getMercatorProjection: getMercatorProjection,
+        getOverlayViewProjection: getGoogleOverlayViewProjection
     });
 
 }(app));
