@@ -179,11 +179,50 @@
 }(app));
 (function (app) {
 
-    function getMercatorProjection(centerPoint, extents) {
+    function createDefaultProjection() {
         return d3.geo.mercator()
-                .center([centerPoint.lng(), centerPoint.lat()])
-                .translate([extents.width / 2, extents.height / 2])
-                .scale(5200);
+            .scale(1)
+            .translate([0, 0]);
+    }
+
+    function createDefaultPath(projection) {
+        return d3.geo.path()
+            .projection(projection);
+    }
+
+    function calculateScaleWith(bounds, dimensions) {
+        return Math.max(
+                (bounds.ne.lng - bounds.sw.lng) / dimensions.width,
+                (bounds.ne.lat - bounds.sw.lat) / dimensions.height
+        );
+    }
+
+    function calculateTranslationWith(dimensions, scale, bounds) {
+        return [
+                (dimensions.width - scale * (bounds.ne.lng + bounds.sw.lng)) / 2,
+                (dimensions.height - scale * (bounds.ne.lat + bounds.sw.lat)) / 2
+        ];
+    }
+
+    /**
+     * Math for this function was borrowed from
+     * http://stackoverflow.com/questions/14492284/center-a-map-in-d3-given-a-geojson-object#14691788
+     */
+    function getMercatorProjection(feature, dimensions) {
+        var SIZE_RATIO = .95,
+            projection = createDefaultProjection(),
+            path = createDefaultPath(projection),
+            bounds = getBoundsPoints(path.bounds(feature)),
+            center = d3.geo.centroid(feature),
+            scale = calculateScaleWith(bounds, dimensions),
+            translation = calculateTranslationWith(dimensions, scale, bounds);
+
+        projection
+                .center(center)
+                .scale(SIZE_RATIO / scale)
+                .translate(translation);
+
+        return projection;
     }
 
     function getBoundsPoints(bounds) {
@@ -227,7 +266,8 @@
 
     app.ns(app, 'SvgBoundaryFactory', {
         create: createPolygonWith,
-        convertBounds: convertFeatureToBounds
+        convertBounds: convertFeatureToBounds,
+        getProjection: getMercatorProjection
     });
 
 }(app));
@@ -282,7 +322,7 @@
         this._div.className = 'ground-overlay-view';
 
         this._data = data;
-        this._bounds = getGoogleLatLngBounds(SvgFactory.convertBounds(this._data));
+        this._bounds = getGoogleLatLngBounds(SvgFactory.convertBounds(data));
         this._svg = null;
 
         this.setMap(map);
