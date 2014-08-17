@@ -20,7 +20,9 @@ body {
 
 .ground-overlay-view {
   position: absolute;
+}
 
+.ground-overlay-view, .polygon {
   svg {
     width: 100%;
     height: 100%;
@@ -52,5 +54,9 @@ body {
     display: block;
     margin-bottom: 2px;
     padding: 0 1em;
+
+    &.polygon {
+      border: none;
+    }
   }
 }

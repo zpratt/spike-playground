@@ -49,7 +49,7 @@
         this._div.className = 'ground-overlay-view';
 
         this._data = data;
-        this._bounds = getGoogleLatLngBounds(SvgFactory.convertBounds(this._data));
+        this._bounds = getGoogleLatLngBounds(SvgFactory.convertBounds(data));
         this._svg = null;
 
         this.setMap(map);
