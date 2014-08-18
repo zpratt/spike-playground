@@ -1,9 +1,10 @@
+/*global app Backbone $*/
 (function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
         initialize: function () {
-            this.loaded = $.Deferred();
+            this.loaded = new $.Deferred();
         },
 
         fetch: function () {

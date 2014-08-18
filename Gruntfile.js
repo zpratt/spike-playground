@@ -20,7 +20,6 @@ module.exports = function(grunt) {
             'js/view.js'
         ],
         boundaryExample = [
-            'js/iowa.js',
             'js/map.js',
             'js/donut-graph.js',
             'js/svg-boundary.js',
@@ -35,6 +34,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-react');
     grunt.loadNpmTasks('grunt-sass');
+    grunt.loadNpmTasks('grunt-eslint');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
 
@@ -65,6 +65,9 @@ module.exports = function(grunt) {
                 }
             }
         },
+        eslint: {
+            target: _.union(sharedProdDependencies, boundaryExample, quadtreeExample)
+        },
         concat: {
             options: {
                 sourceMap: true
@@ -85,7 +88,7 @@ module.exports = function(grunt) {
                 dest: 'dist/js/react.js'
             },
             svgBoundaryExample: {
-                src: _.union(sharedProdDependencies, boundaryExample),
+                src: _.union(sharedProdDependencies, ['js/iowa.js'], boundaryExample),
                 dest: 'dist/js/svg-boundary.js'
             },
             experiment: {
@@ -99,5 +102,5 @@ module.exports = function(grunt) {
     });
 
     // Default task(s).
-    grunt.registerTask('default', ['clean', 'react', 'sass', 'concat']);
+    grunt.registerTask('default', ['clean', 'react', 'sass', 'eslint', 'concat']);
 };

@@ -1,3 +1,4 @@
+/*global app google _ $*/
 (function (app) {
 
     function getGoogleLatLngBounds(bounds) {
@@ -8,20 +9,20 @@
     }
 
     function getBboxXy(projection) {
-        var southWestPoint = projection.fromLatLngToDivPixel(this._bounds.getSouthWest()),
-            northEastPoint = projection.fromLatLngToDivPixel(this._bounds.getNorthEast());
+        var southWestPoint = projection.fromLatLngToDivPixel(this.bounds.getSouthWest()),
+            northEastPoint = projection.fromLatLngToDivPixel(this.bounds.getNorthEast());
 
         return {
             sw: southWestPoint,
             ne: northEastPoint
-        }
+        };
     }
 
     function calculateDimensions(bboxPixels) {
         return {
             width: bboxPixels.ne.x - bboxPixels.sw.x,
             height: bboxPixels.sw.y - bboxPixels.ne.y
-        }
+        };
     }
 
     function setTopLeftFor(div, sw, ne) {
@@ -35,10 +36,10 @@
     }
 
     function GroundOverlay (element, bounds) {
-        this._div = element;
-        this._div.className = 'ground-overlay-view';
-        this._bounds = getGoogleLatLngBounds(bounds);
-        this.isInDom = $.Deferred();
+        this.div = element;
+        this.div.className = 'ground-overlay-view';
+        this.bounds = getGoogleLatLngBounds(bounds);
+        this.isInDom = new $.Deferred();
     }
 
     GroundOverlay.prototype = new google.maps.OverlayView();
@@ -47,7 +48,7 @@
         onAdd: function () {
             var panes = this.getPanes();
 
-            panes.overlayLayer.appendChild(this._div);
+            panes.overlayLayer.appendChild(this.div);
         },
 
         draw: function () {
@@ -58,8 +59,8 @@
             extents = getBboxXy.call(this, overlayProjection);
             dimensions = calculateDimensions(extents);
 
-            setTopLeftFor(this._div, extents.sw, extents.ne);
-            setHeightAndWidthFor(this._div, dimensions.width, dimensions.height);
+            setTopLeftFor(this.div, extents.sw, extents.ne);
+            setHeightAndWidthFor(this.div, dimensions.width, dimensions.height);
 
             this.isInDom.resolve(dimensions);
         }

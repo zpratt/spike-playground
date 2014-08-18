@@ -1,4 +1,7 @@
+/*global app Backbone $ google _*/
 (function (app) {
+    'use strict';
+
     var SvgFactory = app.SvgBoundaryFactory,
 
         host = Backbone.history.location.hostname,
@@ -6,7 +9,7 @@
         loaded,
         data = '/dummy-data.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
-        mapLoaded = $.Deferred();
+        mapLoaded = new $.Deferred();
 
     loaded = collection.fetch({url: endPointUrl});
 
@@ -34,7 +37,7 @@
     }
 
     $.when(mapLoaded, loaded).done(function () {
-        var counties = app.IowaGeoJson(),
+        var counties = app.getIowaGeoJson(),
             views = [];
 
         _.each(counties, function (county) {

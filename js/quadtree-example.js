@@ -1,3 +1,5 @@
+/*global app Backbone $ proj4 _ Terraformer d3 google*/
+
 (function (app) {
     var EPSG_4087 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
         EPSG_4326 = '+proj=longlat +datum=WGS84 +no_defs',
@@ -7,7 +9,7 @@
         loaded,
         data = '/dummy-data.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
-        mapLoaded = $.Deferred(),
+        mapLoaded = new $.Deferred(),
         rects = [],
         markers = {},
         groupMarkers = {};
@@ -38,7 +40,7 @@
         return {
             sw: swXY,
             ne: neXY
-        }
+        };
     }
 
     function updateNodes(qTree) {
@@ -72,7 +74,7 @@
 
     function bboxToPolygon(swPoint, nePoint) {
         return new Terraformer.Polygon({
-            type:"Polygon",
+            type: 'Polygon',
             coordinates:
                 [
                     [
@@ -83,14 +85,14 @@
                         [nePoint.x, nePoint.y]
                     ]
                 ]
-        })
+        });
     }
 
     function pointInBounds(point, bounds) {
         var boundsPoints = convertGoogleMapBoundsToXY(bounds),
             boundsPoly = bboxToPolygon(boundsPoints.sw, boundsPoints.ne),
             latLng = new Terraformer.Point({
-                type:"Point",
+                type: 'Point',
                 coordinates:[point.x, point.y]
             });
 
@@ -99,18 +101,15 @@
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-//            xyBounds = convertGoogleMapBoundsToXY(inputBounds),
             PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
 
             pointsInBounds = _.filter(xyPoints, function (point) {
-                return pointInBounds(point, inputBounds)
+                return pointInBounds(point, inputBounds);
             });
 
         if (xyPoints.length === pointsInBounds.length) {
             quadtree = d3.geom.quadtree()
-                .extent(PROJECTION_BOUNDS)
-//                .extent([[xyBounds.sw.x, xyBounds.sw.y], [xyBounds.ne.x, xyBounds.ne.y]])
-            (pointsToArray(pointsInBounds));
+                .extent(PROJECTION_BOUNDS)(pointsToArray(pointsInBounds));
         } else {
             quadtree = d3.geom.quadtree(pointsInBounds);
         }
@@ -226,7 +225,7 @@
             var containsOthers = false;
 
             _.each(containingBoundsSet, function (innerBounds) {
-                if (boundsContainedBy(innerBounds, outerBounds) && outerBounds.id != innerBounds.id) {
+                if (boundsContainedBy(innerBounds, outerBounds) && outerBounds.id !== innerBounds.id) {
                     containsOthers = true;
                 }
                 return !containsOthers;
@@ -278,9 +277,8 @@
     });
 
     Backbone.Events.on('hide-marker', function (nodeToHide) {
-        var model = collection.where({x_coord: nodeToHide.point.x, y_coord: nodeToHide.point.y})[0];
+        var model = collection.where({xCoord: nodeToHide.point.x, yCoord: nodeToHide.point.y})[0];
 
-//        markers[model.id].setMap(null);
         markers[model.id].setOpacity(.2);
 
         createMarkerForGroup(nodeToHide.bounds);
@@ -293,7 +291,6 @@
             resetGroupMarkerCache();
 
             _.each(markers, function (marker) {
-//                marker.setMap(app.map);
                 marker.setOpacity(1.0);
             });
 
@@ -304,8 +301,8 @@
         collection.each(function (item) {
             var point = convertLatLngToXy(item.attributes.location);
 
-            item.set('x_coord', point.x);
-            item.set('y_coord', point.y);
+            item.set('xCoord', point.x);
+            item.set('yCoord', point.y);
 
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),

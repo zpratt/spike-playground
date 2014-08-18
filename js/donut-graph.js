@@ -1,3 +1,4 @@
+/*global app d3*/
 (function (app) {
 
     function createSvg(element, width, height) {
