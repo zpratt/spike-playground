@@ -4,12 +4,15 @@
     },
     "globals": {
         "app": true,
+        "module": true,
+        "require": true,
         "_": true,
         "$": true,
         "proj4": true,
         "Terraformer": true,
         "d3": true,
         "google": true,
+        "React": true,
         "Backbone": true
     },
     "rules": {

@@ -36,5 +36,5 @@
         });
     }
 
-    renderList(app.IowaGeoJson());
+    renderList(app.getIowaGeoJson());
 }(app));

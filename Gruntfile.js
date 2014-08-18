@@ -20,12 +20,16 @@ module.exports = function(grunt) {
         reactExample = [
             'js/view.js'
         ],
-        boundaryExample = [
+        mapSvgBoundaryExample = [
             'js/map.js',
             'js/donut-graph.js',
             'js/svg-boundary.js',
             'js/ground-view.js',
             'js/ground-view-example.js'
+        ],
+        offMapSvgBoundaryExample = [
+            'js/svg-boundary.js',
+            'js/svg-boundary-list-example.js'
         ],
         quadtreeExample = [
             'js/map.js',
@@ -70,7 +74,14 @@ module.exports = function(grunt) {
             options: {
                 config: '.eslintrc'
             },
-            target: _.union(sharedProdDependencies, boundaryExample, quadtreeExample)
+            target: [
+                'js/**/*.js',
+                'Gruntfile.js',
+                'karma.conf.js',
+                '!js/iowa.js',
+                '!js/view.js',
+                '!js/experiment.js'
+            ]
         },
         concat: {
             options: {
@@ -92,12 +103,16 @@ module.exports = function(grunt) {
                 dest: 'dist/js/react.js'
             },
             svgBoundaryExample: {
-                src: _.union(sharedProdDependencies, ['js/iowa.js'], boundaryExample),
+                src: _.union(sharedProdDependencies, ['js/iowa.js'], mapSvgBoundaryExample),
                 dest: 'dist/js/svg-boundary.js'
             },
             experiment: {
                 src: _.union(sharedProdDependencies, ['js/map.js', 'js/composite-marker.js', 'js/experiment.js']),
                 dest: 'dist/js/experiment.js'
+            },
+            boundaryListExample: {
+                src: _.union(sharedProdDependencies, offMapSvgBoundaryExample),
+                dest: 'dist/js/boundary-list-example.js'
             }
         },
         clean: {
