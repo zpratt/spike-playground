@@ -1,5 +1,5 @@
-/*global app d3*/
 (function (app) {
+    'use strict';
 
     function createSvg(element, width, height) {
         return d3.select(element).append('svg')

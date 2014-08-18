@@ -1,4 +1,6 @@
 (function (app){
+    'use strict';
+
     var SvgFactory = app.SvgBoundaryFactory;
 
     function renderBoundary(boundary, element, dimensions) {

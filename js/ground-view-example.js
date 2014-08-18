@@ -1,4 +1,3 @@
-/*global app Backbone $ google _*/
 (function (app) {
     'use strict';
 

@@ -1,5 +1,5 @@
-/*global app d3 google*/
 (function (app) {
+    'use strict';
 
     var DEFAULT_SIZE_RATIO = .95;
 

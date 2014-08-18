@@ -1,4 +1,5 @@
 module.exports = function(grunt) {
+    'use strict';
 
     var _ = require('lodash'),
 
@@ -66,6 +67,9 @@ module.exports = function(grunt) {
             }
         },
         eslint: {
+            options: {
+                config: '.eslintrc'
+            },
             target: _.union(sharedProdDependencies, boundaryExample, quadtreeExample)
         },
         concat: {

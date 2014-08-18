@@ -1,5 +1,5 @@
-/*global app google _ $*/
 (function (app) {
+    'use strict';
 
     function getGoogleLatLngBounds(bounds) {
         var swPoint = new google.maps.LatLng(bounds.sw.lat, bounds.sw.lng),

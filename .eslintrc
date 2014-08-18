@@ -3,7 +3,12 @@
         "browser": true
     },
     "globals": {
+        "app": true,
         "_": true,
+        "$": true,
+        "proj4": true,
+        "Terraformer": true,
+        "d3": true,
         "google": true,
         "Backbone": true
     },

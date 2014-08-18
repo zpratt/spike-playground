@@ -1,5 +1,6 @@
-/*global app Backbone google*/
 (function (app) {
+    'use strict';
+
     function initialize() {
         var mapOptions = {
             center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),

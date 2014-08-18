@@ -1,4 +1,5 @@
 (function (app) {
+    'use strict';
 
     function setTopLeftFor(div, point) {
         div.style.left = point.x + 'px';
