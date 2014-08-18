@@ -23,12 +23,12 @@ module.exports = function(grunt) {
         mapSvgBoundaryExample = [
             'js/map.js',
             'js/donut-graph.js',
-            'js/svg-boundary.js',
+            'js/svg-boundary-factory.js',
             'js/ground-view.js',
             'js/ground-view-example.js'
         ],
         offMapSvgBoundaryExample = [
-            'js/svg-boundary.js',
+            'js/svg-boundary-factory.js',
             'js/svg-boundary-list-example.js'
         ],
         quadtreeExample = [
