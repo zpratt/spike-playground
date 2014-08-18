@@ -4,16 +4,6 @@
 
     var mapIdleDeferred;
 
-    function init() {
-        mapIdleDeferred = $.Deferred();
-
-        Backbone.Events.once('map-idle', function () {
-            mapIdleDeferred.resolve();
-        });
-
-        mapIdleDeferred.done(main);
-    }
-
     function main() {
         var element = document.createElement('div'),
             ContentView,
@@ -39,6 +29,16 @@
         React.renderComponent(<ContentView name={'Hello World'} />, element);
 
         marker.setMap(app.map);
+    }
+
+    function init() {
+        mapIdleDeferred = $.Deferred();
+
+        Backbone.Events.once('map-idle', function () {
+            mapIdleDeferred.resolve();
+        });
+
+        mapIdleDeferred.done(main);
     }
 
     init();

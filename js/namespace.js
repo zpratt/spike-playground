@@ -1,33 +1,33 @@
 (function(global) {
     'use strict';
 
-    function ns (parent_ns, ns_string, extent) {
-        var ns_parts = ns_string.split('.'),
+    function ns (parentNamespace, nsString, extent) {
+        var namespaceParts = nsString.split('.'),
             hlq = 'app',
-            parent = parent_ns,
+            parent = parentNamespace,
             i;
 
-        if (ns_parts[0] === hlq) {
-            ns_parts = ns_parts.slice(0);
+        if (namespaceParts[0] === hlq) {
+            namespaceParts = namespaceParts.slice(0);
         }
 
-        for (i = 0; i < ns_parts.length; i += 1) {
-            if (parent[ns_parts[i]] === undefined) {
+        for (i = 0; i < namespaceParts.length; i += 1) {
+            if (parent[namespaceParts[i]] === undefined) {
                 if (extent) {
-                    parent[ns_parts[i]] = extent;
+                    parent[namespaceParts[i]] = extent;
                 } else {
-                    parent[ns_parts[i]] = {};
+                    parent[namespaceParts[i]] = {};
                 }
             }
 
-            parent = parent[ns_parts[i]];
+            parent = parent[namespaceParts[i]];
         }
 
         return parent;
     }
 
-    function bindNS (parent_ns, ns_string, extent) {
-        ns.apply(this, [parent_ns, ns_string, extent]);
+    function bindNS (parentNamespace, namespaceString, extent) {
+        ns.apply(this, [parentNamespace, namespaceString, extent]);
     }
 
     global.app = {

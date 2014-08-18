@@ -1,4 +1,6 @@
 (function (app) {
+    'use strict';
+
     var SvgFactory = app.SvgBoundaryFactory,
 
         host = Backbone.history.location.hostname,
@@ -6,7 +8,7 @@
         loaded,
         data = '/dummy-data.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
-        mapLoaded = $.Deferred();
+        mapLoaded = new $.Deferred();
 
     loaded = collection.fetch({url: endPointUrl});
 
@@ -22,19 +24,20 @@
             view = new app.GroundViewOverlay(element, bounds);
 
         view.isInDom.done(function (dimensions) {
-            SvgFactory.create(
-                county,
-                element,
-                {height: dimensions.height, width: dimensions.width},
-                SvgFactory.getOverlayViewProjection(view.getProjection(), bounds)
-            );
+            var svgBoundary = SvgFactory.create(
+                    element,
+                    dimensions
+                ),
+                projection = SvgFactory.getOverlayViewProjection(view.getProjection(), bounds);
+
+            svgBoundary.render(county, projection);
         });
 
         return view;
     }
 
     $.when(mapLoaded, loaded).done(function () {
-        var counties = app.IowaGeoJson(),
+        var counties = app.getIowaGeoJson(),
             views = [];
 
         _.each(counties, function (county) {

@@ -1,0 +1,29 @@
+{
+    "env": {
+        "browser": true
+    },
+    "globals": {
+        "app": true,
+        "module": true,
+        "require": true,
+        "_": true,
+        "$": true,
+        "proj4": true,
+        "Terraformer": true,
+        "d3": true,
+        "google": true,
+        "React": true,
+        "Backbone": true
+    },
+    "rules": {
+        "eqeqeq": [2, "smart"],
+        "guard-for-in": 2,
+        "no-undef": 2,
+        "no-unused-vars": [2, {"vars": "local", "args": "none"}],
+        "strict": 2,
+        "quotes": [2, "single"],
+        "consistent-return": 2,
+        "complexity": [1, 1],
+        "dot-notation": 2
+    }
+}

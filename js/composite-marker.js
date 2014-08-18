@@ -1,4 +1,5 @@
 (function (app) {
+    'use strict';
 
     function setTopLeftFor(div, point) {
         div.style.left = point.x + 'px';
@@ -6,10 +7,10 @@
     }
 
     function CompositeMarker (element, location) {
-        this._element = element;
-        this._location = location;
+        this.element = element;
+        this.location = location;
 
-        this._element.className = 'composite-marker';
+        this.element.className = 'composite-marker';
     }
 
     CompositeMarker.prototype = new google.maps.OverlayView();
@@ -18,14 +19,14 @@
         onAdd: function () {
             var panes = this.getPanes();
 
-            panes.overlayLayer.appendChild(this._element);
+            panes.overlayLayer.appendChild(this.element);
         },
 
         draw: function () {
             var overlayProjection = this.getProjection(),
-                positionWithinDiv = overlayProjection.fromLatLngToDivPixel(this._location);
+                positionWithinDiv = overlayProjection.fromLatLngToDivPixel(this.location);
 
-            setTopLeftFor(this._element, positionWithinDiv);
+            setTopLeftFor(this.element, positionWithinDiv);
         }
     });
 

@@ -1,14 +1,15 @@
 (function (app){
+    'use strict';
+
     var SvgFactory = app.SvgBoundaryFactory;
 
     function renderBoundary(boundary, element, dimensions) {
-        var boundarySvg,
+        var projection = SvgFactory.getMercatorProjection(boundary, dimensions),
+            svgBoundary = SvgFactory.create(element, dimensions);
 
-            projection = SvgFactory.getMercatorProjection(boundary, dimensions);
+        svgBoundary.render(boundary, projection);
 
-        boundarySvg = SvgFactory.create(boundary, element, dimensions, projection);
-
-        return boundarySvg;
+        return svgBoundary;
     }
 
     function renderList(counties) {
@@ -34,5 +35,5 @@
         });
     }
 
-    renderList(app.IowaGeoJson());
+    renderList(app.getIowaGeoJson());
 }(app));

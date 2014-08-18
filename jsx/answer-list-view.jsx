@@ -20,7 +20,7 @@
             },
             render: function() {
                 var entries = [];
-                if ('pending' === this.props.collection.loaded.state()) {
+                if (this.props.collection.loaded.state() === 'pending') {
                     return <li>Loading</li>;
                 } else {
                     entries = this.props.collection.map(function (model) {
