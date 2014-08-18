@@ -2,6 +2,10 @@
     'use strict';
 
     var DEFAULT_SIZE_RATIO = .95;
+//        ,
+//        PATTERN = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
+//            '<line x1="0" y1="0" x2="0" y2="10"/> ' +
+//            '</pattern>';
 
     function createDefaultProjection() {
         return d3.geo.mercator()
@@ -93,30 +97,12 @@
         return getBoundsPoints(d3.geo.bounds(data));
     }
 
-    function createPolygonWith(geojson, element, dimensions, projection) {
-        var path = createPathWith(projection),
-            pattern = '<pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> ' +
-                '<line x1="0" y1="0" x2="0" y2="10"/> ' +
-                '</pattern>',
-
-            svg = d3.select(element).append('svg');
-
-        svg.append('defs').html(pattern);
-
-        svg
-            .attr('viewBox', '0 0 ' + dimensions.width + ' ' + dimensions.height)
-            .selectAll('path')
-            .data(geojson.features)
-            .enter()
-            .append('path')
-            .attr('d', path)
-            .attr('fill', 'url(#diagonalHatch)');
-
-        return svg;
+    function create(element, dimensions) {
+        return new app.SvgBoundary(element, dimensions);
     }
 
     app.ns(app, 'SvgBoundaryFactory', {
-        create: createPolygonWith,
+        create: create,
         convertBounds: convertFeatureToBounds,
         getMercatorProjection: getMercatorProjection,
         getOverlayViewProjection: getGoogleOverlayViewProjection

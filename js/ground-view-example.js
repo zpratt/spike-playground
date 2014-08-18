@@ -24,12 +24,13 @@
             view = new app.GroundViewOverlay(element, bounds);
 
         view.isInDom.done(function (dimensions) {
-            SvgFactory.create(
-                county,
-                element,
-                {height: dimensions.height, width: dimensions.width},
-                SvgFactory.getOverlayViewProjection(view.getProjection(), bounds)
-            );
+            var svgBoundary = SvgFactory.create(
+                    element,
+                    dimensions
+                ),
+                projection = SvgFactory.getOverlayViewProjection(view.getProjection(), bounds);
+
+            svgBoundary.render(county, projection);
         });
 
         return view;

@@ -23,11 +23,13 @@ module.exports = function(grunt) {
         mapSvgBoundaryExample = [
             'js/map.js',
             'js/donut-graph.js',
+            'js/svg-boundary.js',
             'js/svg-boundary-factory.js',
             'js/ground-view.js',
             'js/ground-view-example.js'
         ],
         offMapSvgBoundaryExample = [
+            'js/svg-boundary.js',
             'js/svg-boundary-factory.js',
             'js/svg-boundary-list-example.js'
         ],
@@ -111,7 +113,7 @@ module.exports = function(grunt) {
                 dest: 'dist/js/experiment.js'
             },
             boundaryListExample: {
-                src: _.union(sharedProdDependencies, offMapSvgBoundaryExample),
+                src: _.union(sharedProdDependencies, ['js/iowa.js'], offMapSvgBoundaryExample),
                 dest: 'dist/js/boundary-list-example.js'
             }
         },
