@@ -1,33 +1,33 @@
 (function(global) {
     'use strict';
 
-    function ns (parent_ns, ns_string, extent) {
-        var ns_parts = ns_string.split('.'),
+    function ns (parentNamespace, nsString, extent) {
+        var namespaceParts = nsString.split('.'),
             hlq = 'app',
-            parent = parent_ns,
+            parent = parentNamespace,
             i;
 
-        if (ns_parts[0] === hlq) {
-            ns_parts = ns_parts.slice(0);
+        if (namespaceParts[0] === hlq) {
+            namespaceParts = namespaceParts.slice(0);
         }
 
-        for (i = 0; i < ns_parts.length; i += 1) {
-            if (parent[ns_parts[i]] === undefined) {
+        for (i = 0; i < namespaceParts.length; i += 1) {
+            if (parent[namespaceParts[i]] === undefined) {
                 if (extent) {
-                    parent[ns_parts[i]] = extent;
+                    parent[namespaceParts[i]] = extent;
                 } else {
-                    parent[ns_parts[i]] = {};
+                    parent[namespaceParts[i]] = {};
                 }
             }
 
-            parent = parent[ns_parts[i]];
+            parent = parent[namespaceParts[i]];
         }
 
         return parent;
     }
 
-    function bindNS (parent_ns, ns_string, extent) {
-        ns.apply(this, [parent_ns, ns_string, extent]);
+    function bindNS (parentNamespace, namespaceString, extent) {
+        ns.apply(this, [parentNamespace, namespaceString, extent]);
     }
 
     global.app = {
@@ -37,6 +37,7 @@
 
 }(this));
 
+/*global app Backbone*/
 (function (app) {
     app.ns(app, 'AnswersModel', Backbone.Model.extend({
         defaults: {
@@ -47,12 +48,14 @@
         initialize: function () {  }
     }));
 }(app));
+
+/*global app Backbone $*/
 (function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
         initialize: function () {
-            this.loaded = $.Deferred();
+            this.loaded = new $.Deferred();
         },
 
         fetch: function () {
@@ -68,13 +71,16 @@
         url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
     }));
 }(app));
+
 (function (app) {
+    'use strict';
+
     function initialize() {
         var mapOptions = {
             center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
             zoom: 7
         };
-        var map = new google.maps.Map(document.getElementById("map-canvas"),
+        var map = new google.maps.Map(document.getElementById('map-canvas'),
             mapOptions);
 
         app.ns(app, 'map', map);
@@ -97,7 +103,10 @@
     }
     google.maps.event.addDomListener(window, 'load', initialize);
 }(app));
+
 (function (app) {
+    'use strict';
+
     var EPSG_4087 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
         EPSG_4326 = '+proj=longlat +datum=WGS84 +no_defs',
 
@@ -106,7 +115,7 @@
         loaded,
         data = '/dummy-data.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
-        mapLoaded = $.Deferred(),
+        mapLoaded = new $.Deferred(),
         rects = [],
         markers = {},
         groupMarkers = {};
@@ -137,7 +146,7 @@
         return {
             sw: swXY,
             ne: neXY
-        }
+        };
     }
 
     function updateNodes(qTree) {
@@ -171,7 +180,7 @@
 
     function bboxToPolygon(swPoint, nePoint) {
         return new Terraformer.Polygon({
-            type:"Polygon",
+            type: 'Polygon',
             coordinates:
                 [
                     [
@@ -182,14 +191,14 @@
                         [nePoint.x, nePoint.y]
                     ]
                 ]
-        })
+        });
     }
 
     function pointInBounds(point, bounds) {
         var boundsPoints = convertGoogleMapBoundsToXY(bounds),
             boundsPoly = bboxToPolygon(boundsPoints.sw, boundsPoints.ne),
             latLng = new Terraformer.Point({
-                type:"Point",
+                type: 'Point',
                 coordinates:[point.x, point.y]
             });
 
@@ -198,18 +207,15 @@
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-//            xyBounds = convertGoogleMapBoundsToXY(inputBounds),
             PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
 
             pointsInBounds = _.filter(xyPoints, function (point) {
-                return pointInBounds(point, inputBounds)
+                return pointInBounds(point, inputBounds);
             });
 
         if (xyPoints.length === pointsInBounds.length) {
             quadtree = d3.geom.quadtree()
-                .extent(PROJECTION_BOUNDS)
-//                .extent([[xyBounds.sw.x, xyBounds.sw.y], [xyBounds.ne.x, xyBounds.ne.y]])
-            (pointsToArray(pointsInBounds));
+                .extent(PROJECTION_BOUNDS)(pointsToArray(pointsInBounds));
         } else {
             quadtree = d3.geom.quadtree(pointsInBounds);
         }
@@ -325,7 +331,7 @@
             var containsOthers = false;
 
             _.each(containingBoundsSet, function (innerBounds) {
-                if (boundsContainedBy(innerBounds, outerBounds) && outerBounds.id != innerBounds.id) {
+                if (boundsContainedBy(innerBounds, outerBounds) && outerBounds.id !== innerBounds.id) {
                     containsOthers = true;
                 }
                 return !containsOthers;
@@ -377,9 +383,8 @@
     });
 
     Backbone.Events.on('hide-marker', function (nodeToHide) {
-        var model = collection.where({x_coord: nodeToHide.point.x, y_coord: nodeToHide.point.y})[0];
+        var model = collection.where({xCoord: nodeToHide.point.x, yCoord: nodeToHide.point.y})[0];
 
-//        markers[model.id].setMap(null);
         markers[model.id].setOpacity(.2);
 
         createMarkerForGroup(nodeToHide.bounds);
@@ -392,7 +397,6 @@
             resetGroupMarkerCache();
 
             _.each(markers, function (marker) {
-//                marker.setMap(app.map);
                 marker.setOpacity(1.0);
             });
 
@@ -403,8 +407,8 @@
         collection.each(function (item) {
             var point = convertLatLngToXy(item.attributes.location);
 
-            item.set('x_coord', point.x);
-            item.set('y_coord', point.y);
+            item.set('xCoord', point.x);
+            item.set('yCoord', point.y);
 
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),

@@ -1,33 +1,33 @@
 (function(global) {
     'use strict';
 
-    function ns (parent_ns, ns_string, extent) {
-        var ns_parts = ns_string.split('.'),
+    function ns (parentNamespace, nsString, extent) {
+        var namespaceParts = nsString.split('.'),
             hlq = 'app',
-            parent = parent_ns,
+            parent = parentNamespace,
             i;
 
-        if (ns_parts[0] === hlq) {
-            ns_parts = ns_parts.slice(0);
+        if (namespaceParts[0] === hlq) {
+            namespaceParts = namespaceParts.slice(0);
         }
 
-        for (i = 0; i < ns_parts.length; i += 1) {
-            if (parent[ns_parts[i]] === undefined) {
+        for (i = 0; i < namespaceParts.length; i += 1) {
+            if (parent[namespaceParts[i]] === undefined) {
                 if (extent) {
-                    parent[ns_parts[i]] = extent;
+                    parent[namespaceParts[i]] = extent;
                 } else {
-                    parent[ns_parts[i]] = {};
+                    parent[namespaceParts[i]] = {};
                 }
             }
 
-            parent = parent[ns_parts[i]];
+            parent = parent[namespaceParts[i]];
         }
 
         return parent;
     }
 
-    function bindNS (parent_ns, ns_string, extent) {
-        ns.apply(this, [parent_ns, ns_string, extent]);
+    function bindNS (parentNamespace, namespaceString, extent) {
+        ns.apply(this, [parentNamespace, namespaceString, extent]);
     }
 
     global.app = {
@@ -37,6 +37,7 @@
 
 }(this));
 
+/*global app Backbone*/
 (function (app) {
     app.ns(app, 'AnswersModel', Backbone.Model.extend({
         defaults: {
@@ -47,12 +48,14 @@
         initialize: function () {  }
     }));
 }(app));
+
+/*global app Backbone $*/
 (function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
         initialize: function () {
-            this.loaded = $.Deferred();
+            this.loaded = new $.Deferred();
         },
 
         fetch: function () {
@@ -68,6 +71,7 @@
         url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
     }));
 }(app));
+
 /** @jsx React.DOM */
 (function (app) {
     'use strict';
@@ -102,7 +106,7 @@
             },
             render: function() {
                 var entries = [];
-                if ('pending' === this.props.collection.loaded.state()) {
+                if (this.props.collection.loaded.state() === 'pending') {
                     return React.DOM.li(null, "Loading");
                 } else {
                     entries = this.props.collection.map(function (model) {
@@ -117,4 +121,5 @@
     answerCollection.fetch();
     React.renderComponent(AnswerListView({collection: answerCollection}), document.getElementById('main-container'));
 }(app));
+
 //# sourceMappingURL=react.js.map

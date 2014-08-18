@@ -1,33 +1,33 @@
 (function(global) {
     'use strict';
 
-    function ns (parent_ns, ns_string, extent) {
-        var ns_parts = ns_string.split('.'),
+    function ns (parentNamespace, nsString, extent) {
+        var namespaceParts = nsString.split('.'),
             hlq = 'app',
-            parent = parent_ns,
+            parent = parentNamespace,
             i;
 
-        if (ns_parts[0] === hlq) {
-            ns_parts = ns_parts.slice(0);
+        if (namespaceParts[0] === hlq) {
+            namespaceParts = namespaceParts.slice(0);
         }
 
-        for (i = 0; i < ns_parts.length; i += 1) {
-            if (parent[ns_parts[i]] === undefined) {
+        for (i = 0; i < namespaceParts.length; i += 1) {
+            if (parent[namespaceParts[i]] === undefined) {
                 if (extent) {
-                    parent[ns_parts[i]] = extent;
+                    parent[namespaceParts[i]] = extent;
                 } else {
-                    parent[ns_parts[i]] = {};
+                    parent[namespaceParts[i]] = {};
                 }
             }
 
-            parent = parent[ns_parts[i]];
+            parent = parent[namespaceParts[i]];
         }
 
         return parent;
     }
 
-    function bindNS (parent_ns, ns_string, extent) {
-        ns.apply(this, [parent_ns, ns_string, extent]);
+    function bindNS (parentNamespace, namespaceString, extent) {
+        ns.apply(this, [parentNamespace, namespaceString, extent]);
     }
 
     global.app = {
@@ -37,6 +37,7 @@
 
 }(this));
 
+/*global app Backbone*/
 (function (app) {
     app.ns(app, 'AnswersModel', Backbone.Model.extend({
         defaults: {
@@ -47,12 +48,14 @@
         initialize: function () {  }
     }));
 }(app));
+
+/*global app Backbone $*/
 (function (app) {
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
         initialize: function () {
-            this.loaded = $.Deferred();
+            this.loaded = new $.Deferred();
         },
 
         fetch: function () {
@@ -68,13 +71,16 @@
         url: 'http://api.stackexchange.com/2.2/tags/reactjs/faq?site=stackoverflow'
     }));
 }(app));
+
 (function (app) {
+    'use strict';
+
     function initialize() {
         var mapOptions = {
             center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
             zoom: 7
         };
-        var map = new google.maps.Map(document.getElementById("map-canvas"),
+        var map = new google.maps.Map(document.getElementById('map-canvas'),
             mapOptions);
 
         app.ns(app, 'map', map);
@@ -97,7 +103,9 @@
     }
     google.maps.event.addDomListener(window, 'load', initialize);
 }(app));
+
 (function (app) {
+    'use strict';
 
     function setTopLeftFor(div, point) {
         div.style.left = point.x + 'px';
@@ -105,10 +113,10 @@
     }
 
     function CompositeMarker (element, location) {
-        this._element = element;
-        this._location = location;
+        this.element = element;
+        this.location = location;
 
-        this._element.className = 'composite-marker';
+        this.element.className = 'composite-marker';
     }
 
     CompositeMarker.prototype = new google.maps.OverlayView();
@@ -117,14 +125,14 @@
         onAdd: function () {
             var panes = this.getPanes();
 
-            panes.overlayLayer.appendChild(this._element);
+            panes.overlayLayer.appendChild(this.element);
         },
 
         draw: function () {
             var overlayProjection = this.getProjection(),
-                positionWithinDiv = overlayProjection.fromLatLngToDivPixel(this._location);
+                positionWithinDiv = overlayProjection.fromLatLngToDivPixel(this.location);
 
-            setTopLeftFor(this._element, positionWithinDiv);
+            setTopLeftFor(this.element, positionWithinDiv);
         }
     });
 
@@ -136,16 +144,6 @@
     'use strict';
 
     var mapIdleDeferred;
-
-    function init() {
-        mapIdleDeferred = $.Deferred();
-
-        Backbone.Events.once('map-idle', function () {
-            mapIdleDeferred.resolve();
-        });
-
-        mapIdleDeferred.done(main);
-    }
 
     function main() {
         var element = document.createElement('div'),
@@ -172,6 +170,16 @@
         React.renderComponent(ContentView({name: 'Hello World'}), element);
 
         marker.setMap(app.map);
+    }
+
+    function init() {
+        mapIdleDeferred = $.Deferred();
+
+        Backbone.Events.once('map-idle', function () {
+            mapIdleDeferred.resolve();
+        });
+
+        mapIdleDeferred.done(main);
     }
 
     init();

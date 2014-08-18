@@ -94,102 +94,6 @@
 (function (app) {
     'use strict';
 
-    function initialize() {
-        var mapOptions = {
-            center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
-            zoom: 7
-        };
-        var map = new google.maps.Map(document.getElementById('map-canvas'),
-            mapOptions);
-
-        app.ns(app, 'map', map);
-
-        google.maps.event.addListener(map, 'idle', function () {
-            Backbone.Events.trigger('map-idle');
-        });
-
-        google.maps.event.addListener(map, 'zoom_changed', function () {
-            Backbone.Events.trigger('zoom-change', map.getBounds());
-        });
-
-        google.maps.event.addListener(map, 'bounds_changed', function () {
-            Backbone.Events.trigger('bounds-change', map.getBounds());
-        });
-
-        google.maps.event.addListenerOnce(map, 'idle', function () {
-            Backbone.Events.trigger('map-loaded');
-        });
-    }
-    google.maps.event.addDomListener(window, 'load', initialize);
-}(app));
-
-(function (app) {
-    'use strict';
-
-    function createSvg(element, width, height) {
-        return d3.select(element).append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .append('g')
-            .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')');
-    }
-
-    function graph(element, data) {
-        var width = 100,
-            height = 100,
-            radius = Math.min(width, height) / 2,
-
-            color,
-            arc,
-            pie,
-            svg,
-            g;
-
-        color = d3.scale.ordinal()
-            .range(['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56', '#d0743c', '#ff8c00']);
-
-        arc = d3.svg.arc()
-            .outerRadius(radius - 60)
-            .innerRadius(radius - 70);
-
-        pie = d3.layout.pie()
-            .sort(null)
-            .value(function(d) {
-                return d.percent_done;
-            });
-
-        svg = createSvg(element, width, height);
-
-        g = svg.selectAll('.arc')
-            .data(pie(data))
-            .enter().append('g')
-            .attr('class', 'arc');
-
-        g.append('path')
-            .attr('d', arc)
-            .style('fill', function(d) {
-                var value = d.data.percent_done;
-
-                return color(value);
-            });
-
-        g.append('text')
-            .attr('transform', function(d) {
-                return 'translate(' + arc.centroid(d) + ')';
-            })
-            .attr('dy', '.35em')
-            .style('text-anchor', 'middle');
-    }
-
-    app.ns(app, 'donut', {
-        graph: graph
-    });
-
-}(app));
-
-(function (app) {
-    'use strict';
-
     function createPathWith(projection) {
         return d3.geo.path()
             .projection(projection);
@@ -338,127 +242,44 @@
 
 }(app));
 
-(function (app) {
+(function (app){
     'use strict';
 
-    function getGoogleLatLngBounds(bounds) {
-        var swPoint = new google.maps.LatLng(bounds.sw.lat, bounds.sw.lng),
-            nePoint = new google.maps.LatLng(bounds.ne.lat, bounds.ne.lng);
+    var SvgFactory = app.SvgBoundaryFactory;
 
-        return new google.maps.LatLngBounds(swPoint, nePoint);
+    function renderBoundary(boundary, element, dimensions) {
+        var projection = SvgFactory.getMercatorProjection(boundary, dimensions),
+            svgBoundary = SvgFactory.create(element, dimensions);
+
+        svgBoundary.render(boundary, projection);
+
+        return svgBoundary;
     }
 
-    function getBboxXy(projection) {
-        var southWestPoint = projection.fromLatLngToDivPixel(this.bounds.getSouthWest()),
-            northEastPoint = projection.fromLatLngToDivPixel(this.bounds.getNorthEast());
-
-        return {
-            sw: southWestPoint,
-            ne: northEastPoint
-        };
-    }
-
-    function calculateDimensions(bboxPixels) {
-        return {
-            width: bboxPixels.ne.x - bboxPixels.sw.x,
-            height: bboxPixels.sw.y - bboxPixels.ne.y
-        };
-    }
-
-    function setTopLeftFor(div, sw, ne) {
-        div.style.left = sw.x + 'px';
-        div.style.top = ne.y + 'px';
-    }
-
-    function setHeightAndWidthFor(div, width, height) {
-        div.style.width = width + 'px';
-        div.style.height = height + 'px';
-    }
-
-    function GroundOverlay (element, bounds) {
-        this.div = element;
-        this.div.className = 'ground-overlay-view';
-        this.bounds = getGoogleLatLngBounds(bounds);
-        this.isInDom = new $.Deferred();
-    }
-
-    GroundOverlay.prototype = new google.maps.OverlayView();
-
-    _.extend(GroundOverlay.prototype, {
-        onAdd: function () {
-            var panes = this.getPanes();
-
-            panes.overlayLayer.appendChild(this.div);
-        },
-
-        draw: function () {
-            var overlayProjection = this.getProjection(),
-                extents,
-                dimensions;
-
-            extents = getBboxXy.call(this, overlayProjection);
-            dimensions = calculateDimensions(extents);
-
-            setTopLeftFor(this.div, extents.sw, extents.ne);
-            setHeightAndWidthFor(this.div, dimensions.width, dimensions.height);
-
-            this.isInDom.resolve(dimensions);
-        }
-    });
-
-    app.ns(app, 'GroundViewOverlay', GroundOverlay);
-
-}(app));
-
-(function (app) {
-    'use strict';
-
-    var SvgFactory = app.SvgBoundaryFactory,
-
-        host = Backbone.history.location.hostname,
-        collection = new Backbone.Collection(),
-        loaded,
-        data = '/dummy-data.json',
-        endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
-        mapLoaded = new $.Deferred();
-
-    loaded = collection.fetch({url: endPointUrl});
-
-    Backbone.Events.once('map-loaded', function () {
-        app.map.setCenter(new google.maps.LatLng(41.577060100767945, -93.90260298828126));
-
-        mapLoaded.resolve();
-    });
-
-    function createGroundOverlay(county) {
-        var element = document.createElement('div'),
-            bounds = SvgFactory.convertBounds(county),
-            view = new app.GroundViewOverlay(element, bounds);
-
-        view.isInDom.done(function (dimensions) {
-            var svgBoundary = SvgFactory.create(
-                    element,
-                    dimensions
-                ),
-                projection = SvgFactory.getOverlayViewProjection(view.getProjection(), bounds);
-
-            svgBoundary.render(county, projection);
-        });
-
-        return view;
-    }
-
-    $.when(mapLoaded, loaded).done(function () {
-        var counties = app.getIowaGeoJson(),
-            views = [];
+    function renderList(counties) {
+        var container = document.querySelector('#main-container ul'),
+            height = 50,
+            width = 50;
 
         _.each(counties, function (county) {
-            views.push(createGroundOverlay(county));
+            var listItem = document.createElement('li'),
+                element = document.createDocumentFragment();
+
+            $(listItem).css('height', height);
+            $(listItem).css('width', width);
+            listItem.className = 'polygon';
+
+            renderBoundary(county, element, {
+                height: height,
+                width: width
+            });
+
+            listItem.appendChild(element);
+            container.appendChild(listItem);
         });
+    }
 
-        _.invoke(views, 'setMap', app.map);
-    });
-
+    renderList(app.getIowaGeoJson());
 }(app));
 
-//# sourceMappingURL=svg-boundary.js.map
+//# sourceMappingURL=boundary-list-example.js.map
