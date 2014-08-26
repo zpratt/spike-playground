@@ -44,6 +44,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-eslint');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-contrib-coffee');
 
     // Project configuration.
     grunt.initConfig({
@@ -51,6 +52,16 @@ module.exports = function(grunt) {
         karma: {
             unit: {
                 configFile: 'karma.conf.js'
+            }
+        },
+        coffee: {
+            compileWithMaps: {
+                options: {
+                    sourceMap: true
+                },
+                files: {
+                    'js/hub.js': 'coffee/hub.coffee'
+                }
             }
         },
         react: {
@@ -82,7 +93,8 @@ module.exports = function(grunt) {
                 'karma.conf.js',
                 '!js/iowa.js',
                 '!js/view.js',
-                '!js/experiment.js'
+                '!js/experiment.js',
+                '!js/hub.js'
             ]
         },
         concat: {
@@ -123,5 +135,5 @@ module.exports = function(grunt) {
     });
 
     // Default task(s).
-    grunt.registerTask('default', ['clean', 'react', 'sass', 'eslint', 'concat']);
+    grunt.registerTask('default', ['clean', 'coffee', 'react', 'sass', 'eslint', 'concat']);
 };
