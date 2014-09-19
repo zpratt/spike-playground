@@ -64,14 +64,6 @@
         });
     }
 
-//    function pointToArray(point) {
-//        return [point.x, point.y];
-//    }
-
-//    function pointsToArray(xyPoints) {
-//        return _.map(xyPoints, pointToArray);
-//    }
-
     function bboxToPolygon(swPoint, nePoint) {
         return new Terraformer.Polygon({
             type: 'Polygon',
@@ -88,36 +80,30 @@
         });
     }
 
-    function pointInBounds(point, bounds) {
-        var boundsPoints = convertGoogleMapBoundsToXY(bounds),
-            boundsPoly = bboxToPolygon(boundsPoints.sw, boundsPoints.ne),
-            latLng = new Terraformer.Point({
-                type: 'Point',
-                coordinates:[point.x, point.y]
-            });
+    function pointInBounds(point, bbox) {
+        var bounds = convertGoogleMapBoundsToXY(bbox),
 
-        return boundsPoly.contains(latLng);
+            swX = bounds.sw.x,
+            swY = bounds.sw.y,
+            neX = bounds.ne.x,
+            neY = bounds.ne.y,
+            y = point.y,
+            x = point.x;
+
+        return  swX <= x && x <= neX && swY <= y && y <= neY;
     }
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-//            PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
-
             pointsInBounds = _.filter(xyPoints, function (point) {
                 return pointInBounds(point, inputBounds);
             });
 
-//        if (xyPoints.length === pointsInBounds.length) {
-//            quadtree = d3.geom.quadtree()
-//                .extent(PROJECTION_BOUNDS)(pointsToArray(pointsInBounds));
-//        } else {
             quadtree = d3.geom.quadtree(pointsInBounds);
-//        }
 
         updateNodes(quadtree);
 
         return quadtree;
-
     }
 
     function pointsToPolygon(x1, y1, x2, y2) {
