@@ -170,13 +170,13 @@
         });
     }
 
-    function pointToArray(point) {
-        return [point.x, point.y];
-    }
+//    function pointToArray(point) {
+//        return [point.x, point.y];
+//    }
 
-    function pointsToArray(xyPoints) {
-        return _.map(xyPoints, pointToArray);
-    }
+//    function pointsToArray(xyPoints) {
+//        return _.map(xyPoints, pointToArray);
+//    }
 
     function bboxToPolygon(swPoint, nePoint) {
         return new Terraformer.Polygon({
@@ -207,18 +207,18 @@
 
     function createQuadTree(xyPoints, inputBounds) {
         var quadtree,
-            PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
+//            PROJECTION_BOUNDS = [[-20037508.3428, -10018754.1714], [20037508.3428, 10018754.1714]],
 
             pointsInBounds = _.filter(xyPoints, function (point) {
                 return pointInBounds(point, inputBounds);
             });
 
-        if (xyPoints.length === pointsInBounds.length) {
-            quadtree = d3.geom.quadtree()
-                .extent(PROJECTION_BOUNDS)(pointsToArray(pointsInBounds));
-        } else {
+//        if (xyPoints.length === pointsInBounds.length) {
+//            quadtree = d3.geom.quadtree()
+//                .extent(PROJECTION_BOUNDS)(pointsToArray(pointsInBounds));
+//        } else {
             quadtree = d3.geom.quadtree(pointsInBounds);
-        }
+//        }
 
         updateNodes(quadtree);
 
@@ -336,6 +336,7 @@
                 }
                 return !containsOthers;
             });
+            rects.push(googleMapsRectangleFromBounds(outerBounds));
 
             return !containsOthers;
         });
@@ -347,7 +348,7 @@
                 Backbone.Events.trigger('hide-marker', {point: {x: nodeToHide.x, y: nodeToHide.y}, bounds: childBounds});
             });
 
-            rects.push(googleMapsRectangleFromBounds(childBounds));
+//            rects.push(googleMapsRectangleFromBounds(childBounds));
         });
 
         app.containingBounds = containingBoundsSet;
@@ -365,7 +366,7 @@
                 position: center,
                 map: app.map,
                 title: 'group ' + bounds.id,
-                opacity: .5
+                opacity: 1.0
             });
         }
     }
@@ -385,7 +386,8 @@
     Backbone.Events.on('hide-marker', function (nodeToHide) {
         var model = collection.where({xCoord: nodeToHide.point.x, yCoord: nodeToHide.point.y})[0];
 
-        markers[model.id].setOpacity(.2);
+//        markers[model.id].setOpacity(.2);
+        markers[model.id].setVisible(false);
 
         createMarkerForGroup(nodeToHide.bounds);
     });
@@ -397,7 +399,7 @@
             resetGroupMarkerCache();
 
             _.each(markers, function (marker) {
-                marker.setOpacity(1.0);
+                marker.setOpacity(0.7);
             });
 
             createAndRenderQuadtree(bounds);
@@ -412,7 +414,8 @@
 
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),
-                title: item.attributes.name
+                title: item.attributes.name,
+                opacity: 0.7
             });
 
             markers[item.id] = marker;
