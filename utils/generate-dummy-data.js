@@ -7,7 +7,7 @@
         intType = '<integer>',
         latLngType = '<lat_lng>',
 
-        numberOfLocationsToCreate = 100,
+        numberOfLocationsToCreate = 1000,
 
         locationSkeleton = {
             name: '<string>',
@@ -20,7 +20,7 @@
 
     function randomLatLng() {
         var randomLat = _.random(39.1, 42.1),
-            randomLng = _.random(88.1, 90.1);
+            randomLng = _.random(87.1, 100.1);
 
         return {
             lat: randomLat,
