@@ -1,7 +1,7 @@
 (function (app) {
     'use strict';
 
-    var EPSG_4087 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
+    var EPSG_3857 = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs',
         EPSG_4326 = '+proj=longlat +datum=WGS84 +no_defs',
 
         host = Backbone.history.location.hostname,
@@ -17,7 +17,7 @@
     loaded = collection.fetch({url: endPointUrl});
 
     function convertLatLngToXy(latLng) {
-        var projectedPoint = proj4(EPSG_4326, EPSG_4087, [latLng.lng, latLng.lat]);
+        var projectedPoint = proj4(EPSG_4326, EPSG_3857, [latLng.lng, latLng.lat]);
 
         return {x: projectedPoint[0], y: projectedPoint[1]};
     }
@@ -130,7 +130,7 @@
     }
 
     function projectedCoordinatePairToGoogleLatLng(coordinates) {
-        var geographicCoords = proj4(EPSG_4087, EPSG_4326, coordinates);
+        var geographicCoords = proj4(EPSG_3857, EPSG_4326, coordinates);
 
         return new google.maps.LatLng(geographicCoords[1], geographicCoords[0]);
     }
@@ -146,7 +146,7 @@
         return new google.maps.LatLngBounds(swGlatLng, neGlatLng);
     }
 
-/*    function googleMapsRectangleFromBounds(inputBounds) {
+    /*function googleMapsRectangleFromBounds(inputBounds) {
         return new google.maps.Rectangle({
             bounds: polygonToGoogleLatLngBounds(inputBounds),
             map: app.map,
@@ -258,7 +258,8 @@
                 position: center,
                 map: app.map,
                 title: 'group ' + bounds.id,
-                opacity: 1.0
+                opacity: 1.0,
+                icon: 'blue-marker.png'
             });
         }
     }
@@ -280,13 +281,16 @@
         var marker = new google.maps.Marker({
             position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),
             title: item.attributes.name,
-//                opacity: 0.7
-            visibility: false
+            opacity: 1.0
         });
 
         markers[item.id] = marker;
 
         marker.setMap(app.map);
+    }
+
+    function lookupModelByCoordinates(xCoord, yCoord) {
+        return collection.where({xCoord: xCoord, yCoord: yCoord})[0];
     }
 
     function init() {
@@ -295,10 +299,12 @@
         });
 
         Backbone.Events.on('hide-marker', function (nodeToHide) {
-            var model = collection.where({xCoord: nodeToHide.point.x, yCoord: nodeToHide.point.y})[0];
+            var model = lookupModelByCoordinates(nodeToHide.point.x, nodeToHide.point.y);
 
-//        markers[model.id].setOpacity(.2);
-            markers[model.id].setVisible(false);
+//            markers[model.id].setOpacity(.2);
+//            markers[model.id].setVisible(false);
+            markers[model.id].setMap(null);
+//            console.log('hidden');
 
             createMarkerForGroup(nodeToHide.bounds);
         });
@@ -310,7 +316,8 @@
                 resetGroupMarkerCache();
 
                 _.each(markers, function (marker) {
-                    marker.setOpacity(0.7);
+                    marker.setOpacity(1.0);
+                    marker.setMap(app.map);
                 });
 
                 createAndRenderQuadtree(bounds);
