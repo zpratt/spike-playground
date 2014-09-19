@@ -7,7 +7,7 @@
         host = Backbone.history.location.hostname,
         collection = new Backbone.Collection(),
         loaded,
-        data = '/dummy-data.json',
+        data = '/locations.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
         mapLoaded = new $.Deferred(),
         rects = [],
@@ -160,13 +160,13 @@
         return new google.maps.LatLngBounds(swGlatLng, neGlatLng);
     }
 
-    function googleMapsRectangleFromBounds(inputBounds) {
+/*    function googleMapsRectangleFromBounds(inputBounds) {
         return new google.maps.Rectangle({
             bounds: polygonToGoogleLatLngBounds(inputBounds),
             map: app.map,
             fillOpacity: 0
         });
-    }
+    }*/
 
     function collectionToXyPoints() {
         return _.map(collection.pluck('location'), convertLatLngToXy);
@@ -179,9 +179,10 @@
     }
 
     function boundsContainedBy(innerBounds, outerBounds) {
-        var X_COORD = 0;
-        var Y_COORD = 1;
-        var innerBoundsCoords = boundingBoxToExtent(innerBounds),
+        var X_COORD = 0,
+            Y_COORD = 1,
+
+            innerBoundsCoords = boundingBoxToExtent(innerBounds),
             outerBoundsCoords = boundingBoxToExtent(outerBounds),
 
             outerNeCoords = outerBoundsCoords[1],
@@ -195,19 +196,8 @@
             outerSwCoords[Y_COORD] <= innerSwCoords[Y_COORD];
     }
 
-    function createAndRenderQuadtree(bounds) {
-        var xyPoints = collectionToXyPoints(),
-            quadtree = createQuadTree(xyPoints, bounds),
-            nodes = flattenQuadtree(quadtree),
-            groupsToRender,
-
-            containingBoundsSet;
-
-        _.each(rects, function (rect) {
-            rect.setMap(null);
-        });
-
-        containingBoundsSet = _.map(getContainingBounds(nodes), function (node) {
+    function getAllBoundsFromQuadtreeOf(nodes) {
+        return _.map(getContainingBounds(nodes), function (node) {
             var nodeBounds = node.bounds,
                 xyBounds = pointsToPolygon(
                     nodeBounds.x1,
@@ -220,23 +210,45 @@
 
             return xyBounds;
         });
+    }
 
-        groupsToRender = _.filter(containingBoundsSet, function (outerBounds) {
+    function hideDebugRectangles() {
+        _.each(rects, function (rect) {
+            rect.setMap(null);
+        });
+    }
+
+    function removeEmptyCellsFrom(flatQuadtree, id) {
+        return _.compact(flatQuadtree[id].nodes);
+    }
+
+    function createAndRenderQuadtree(bounds) {
+        var xyPoints = collectionToXyPoints(),
+            quadtree = createQuadTree(xyPoints, bounds),
+            nodes = flattenQuadtree(quadtree),
+            groupsToRender,
+
+            allBoundsFromQuadtree;
+
+        hideDebugRectangles();
+
+        allBoundsFromQuadtree = getAllBoundsFromQuadtreeOf(nodes);
+
+        groupsToRender = _.filter(allBoundsFromQuadtree, function (outerBounds) {
             var containsOthers = false;
 
-            _.each(containingBoundsSet, function (innerBounds) {
+            _.each(allBoundsFromQuadtree, function (innerBounds) {
                 if (boundsContainedBy(innerBounds, outerBounds) && outerBounds.id !== innerBounds.id) {
                     containsOthers = true;
                 }
-                return !containsOthers;
             });
-            rects.push(googleMapsRectangleFromBounds(outerBounds));
+//            rects.push(googleMapsRectangleFromBounds(outerBounds));
 
             return !containsOthers;
         });
 
         _.each(groupsToRender, function (childBounds) {
-            var nodesInChildBounds = _.compact(nodes[childBounds.id].nodes);
+            var nodesInChildBounds = removeEmptyCellsFrom(nodes, childBounds.id);
 
             _.each(nodesInChildBounds, function (nodeToHide) {
                 Backbone.Events.trigger('hide-marker', {point: {x: nodeToHide.x, y: nodeToHide.y}, bounds: childBounds});
@@ -245,7 +257,7 @@
 //            rects.push(googleMapsRectangleFromBounds(childBounds));
         });
 
-        app.containingBounds = containingBoundsSet;
+        app.containingBounds = allBoundsFromQuadtree;
 
         return quadtree;
     }
@@ -273,53 +285,59 @@
         groupMarkers = {};
     }
 
-    Backbone.Events.on('map-loaded', function () {
-        mapLoaded.resolve();
-    });
+    function renderMarker(item) {
+        var point = convertLatLngToXy(item.attributes.location);
 
-    Backbone.Events.on('hide-marker', function (nodeToHide) {
-        var model = collection.where({xCoord: nodeToHide.point.x, yCoord: nodeToHide.point.y})[0];
+        item.set('xCoord', point.x);
+        item.set('yCoord', point.y);
 
-//        markers[model.id].setOpacity(.2);
-        markers[model.id].setVisible(false);
-
-        createMarkerForGroup(nodeToHide.bounds);
-    });
-
-    $.when(mapLoaded, loaded).done(function () {
-        var quadtree;
-
-        Backbone.Events.on('bounds-change', _.debounce(function (bounds) {
-            resetGroupMarkerCache();
-
-            _.each(markers, function (marker) {
-                marker.setOpacity(0.7);
-            });
-
-            createAndRenderQuadtree(bounds);
-
-        }), 500);
-
-        collection.each(function (item) {
-            var point = convertLatLngToXy(item.attributes.location);
-
-            item.set('xCoord', point.x);
-            item.set('yCoord', point.y);
-
-            var marker = new google.maps.Marker({
-                position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),
-                title: item.attributes.name,
-                opacity: 0.7
-            });
-
-            markers[item.id] = marker;
-
-            marker.setMap(app.map);
+        var marker = new google.maps.Marker({
+            position: new google.maps.LatLng(item.attributes.location.lat, item.attributes.location.lng),
+            title: item.attributes.name,
+//                opacity: 0.7
+            visibility: false
         });
 
-        quadtree = createAndRenderQuadtree(app.map.getBounds());
+        markers[item.id] = marker;
 
-        app.quadtree = quadtree;
-    });
+        marker.setMap(app.map);
+    }
 
+    function init() {
+        Backbone.Events.on('map-loaded', function () {
+            mapLoaded.resolve();
+        });
+
+        Backbone.Events.on('hide-marker', function (nodeToHide) {
+            var model = collection.where({xCoord: nodeToHide.point.x, yCoord: nodeToHide.point.y})[0];
+
+//        markers[model.id].setOpacity(.2);
+            markers[model.id].setVisible(false);
+
+            createMarkerForGroup(nodeToHide.bounds);
+        });
+
+        $.when(mapLoaded, loaded).done(function () {
+            var quadtree;
+
+            Backbone.Events.on('bounds-change', _.debounce(function (bounds) {
+                resetGroupMarkerCache();
+
+                _.each(markers, function (marker) {
+                    marker.setOpacity(0.7);
+                });
+
+                createAndRenderQuadtree(bounds);
+
+            }), 500);
+
+            collection.each(renderMarker);
+
+            quadtree = createAndRenderQuadtree(app.map.getBounds());
+
+            app.quadtree = quadtree;
+        });
+    }
+
+    init();
 }(app));
