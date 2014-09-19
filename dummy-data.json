@@ -35,7 +35,7 @@
         "start": "2014/07/19 21:00:00",
         "percent_done": "10",
         "location": {
-            "lat": 40.79575,
+            "lat": 40.575,
             "lng": -90.43804
         }
     },
@@ -97,6 +97,66 @@
         "location": {
             "lat": 38.63575,
             "lng": -88.34504
+        }
+    },
+    {
+        "name": "Picking Corn",
+        "id": 10,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "10",
+        "location": {
+            "lat": 37.79575,
+            "lng": -83.43804
+        }
+    },
+    {
+        "name": "Picking Sunflowers",
+        "id": 11,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 39.79575,
+            "lng": -87.33804
+        }
+    },
+    {
+        "name": "Picking Watermelon",
+        "id": 12,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 37.63575,
+            "lng": -83.34504
+        }
+    },
+    {
+        "name": "Picking Corn",
+        "id": 13,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "10",
+        "location": {
+            "lat": 37.69575,
+            "lng": -83.43804
+        }
+    },
+    {
+        "name": "Picking Sunflowers",
+        "id": 14,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 40.49575,
+            "lng": -83.23804
+        }
+    },
+    {
+        "name": "Picking Watermelon",
+        "id": 15,
+        "start": "2014/07/19 21:00:00",
+        "percent_done": "53",
+        "location": {
+            "lat": 40.61575,
+            "lng": -83.32504
         }
     }
 ]
