@@ -4,7 +4,7 @@
     var host = Backbone.history.location.hostname,
         collection = new Backbone.Collection(),
         loaded,
-        data = '/dummy-data.json',
+        data = '/locations.json',
         endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
         mapLoaded = new $.Deferred(),
         markers = {};
