@@ -77,8 +77,8 @@
 
     function initialize() {
         var mapOptions = {
-            center: new google.maps.LatLng(40.01144663490021, -90.22767623046876),
-            zoom: 7
+            center: new google.maps.LatLng(40.583324574181574, -90.72755416015626),
+            zoom: 8
         };
         var map = new google.maps.Map(document.getElementById('map-canvas'),
             mapOptions);
