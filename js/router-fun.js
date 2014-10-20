@@ -1,4 +1,6 @@
 (function () {
+    'use strict';
+
     function init() {
         var router = new app.Hub({
                 components: {
