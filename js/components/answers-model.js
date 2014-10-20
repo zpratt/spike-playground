@@ -1,5 +1,7 @@
 /*global app Backbone*/
 (function (app) {
+    'use strict';
+
     app.ns(app, 'AnswersModel', Backbone.Model.extend({
         defaults: {
             'x_coord': 0,

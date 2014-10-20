@@ -1,5 +1,7 @@
 /*global app Backbone $*/
 (function (app) {
+    'use strict';
+
     app.ns(app, 'AnswerCollection', Backbone.Collection.extend({
         model: app.AnswersModel,
 
