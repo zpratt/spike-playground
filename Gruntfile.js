@@ -10,7 +10,8 @@ module.exports = function(grunt) {
             'bower_components/react/react.min.js',
             'bower_components/d3/d3.min.js',
             'bower_components/terraformer/terraformer.min.js',
-            'bower_components/proj4/dist/proj4.js'
+            'bower_components/proj4/dist/proj4.js',
+            'bower_components/hogan/web/builds/3.0.2/hogan-3.0.2.min.mustache.js'
         ],
         sharedProdDependencies = [
             'js/namespace.js',
@@ -45,6 +46,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-coffee');
+    grunt.loadNpmTasks('grunt-hogan');
 
     // Project configuration.
     grunt.initConfig({
@@ -94,8 +96,22 @@ module.exports = function(grunt) {
                 '!js/iowa.js',
                 '!js/view.js',
                 '!js/experiment.js',
-                '!js/hub.js'
+                '!js/hub.js',
+                '!js/templates.js'
             ]
+        },
+        hogan: {
+            options: {
+                binderName : 'revealing',
+                nameFunc: function (filename) {
+                    var filePathParts = filename.split('/');
+                    return filePathParts[filePathParts.length - 1].split('.')[0];
+                }
+            },
+            dist: {
+                src: 'templates/*.mustache',
+                dest: 'js/templates.js'
+            }
         },
         concat: {
             options: {
@@ -135,5 +151,5 @@ module.exports = function(grunt) {
     });
 
     // Default task(s).
-    grunt.registerTask('default', ['clean', 'coffee', 'react', 'sass', 'eslint', 'concat']);
+    grunt.registerTask('default', ['clean', 'coffee', 'react', 'sass', 'eslint', 'hogan', 'concat']);
 };
