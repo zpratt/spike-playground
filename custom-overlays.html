@@ -13,6 +13,28 @@
             position: absolute;
         }
 
+        .vanilla-overlay:after, .vanilla-overlay:before {
+            content: '';
+            left: 50%;
+            margin-left: -10px;
+            position: absolute;
+        }
+        .vanilla-overlay:after {
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #fff;
+            bottom: -8px;
+            margin-left: -8px;
+        }
+        .vanilla-overlay:before {
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid;
+            border-top-color: #ccc;
+            bottom: -10px;
+            margin-left: -10px;
+        }
+
         .map-flag {
             background-color: #FFF;
             border: 1px solid #000;
