@@ -98,7 +98,7 @@
         });
 
         google.maps.event.addListenerOnce(map, 'idle', function () {
-            Backbone.Events.trigger('map-loaded');
+            Backbone.Events.trigger('map-loaded', map);
         });
     }
     google.maps.event.addDomListener(window, 'load', initialize);
