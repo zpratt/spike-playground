@@ -1,7 +1,11 @@
 (function (app, root) {
     'use strict';
 
-    var mapLoaded = new $.Deferred(),
+    var host = Backbone.history.location.hostname,
+        data = '/locations.json',
+        dataLoaded,
+        endPointUrl = host === 'localhost' ? data : '/spike-playground' + data,
+        mapLoaded = new $.Deferred(),
 
         View = Backbone.View.extend({
             className: 'bb-view',
@@ -12,6 +16,12 @@
 
             initialize: function () {
                 this.render();
+
+                this.listenTo(this.model, 'change:name', this.render);
+                this.listenTo(this.model, 'change:id', this.render);
+                this.listenTo(this.model, 'change:start', this.render);
+                this.listenTo(this.model, 'change:percent_done', this.render);
+                this.listenTo(this.model, 'change:location', this.render);
             },
 
             render: function () {
@@ -19,29 +29,17 @@
             }
         });
 
-    function randomLatLng() {
-        var randomLat = _.random(39.1, 42.1),
-            randomLng = _.random(87.1, 100.1);
-
-        return {
-            lat: randomLat,
-            lng: randomLng - randomLng * 2
-        };
-    }
-
     function newView(element, model) {
-        return new View({el: element, model: model});
+        var view = new View({model: model});
+
+        element.appendChild(view.el);
+
+        return view;
     }
 
     function init() {
         var collection = new Backbone.Collection();
-
-        _.times(1000, function () {
-            var point = randomLatLng(),
-                model = new Backbone.Model({point: point, name: 'john doe'});
-
-            collection.add(model);
-        });
+        dataLoaded = collection.fetch({url: endPointUrl});
 
         Backbone.Events.on('map-loaded', function (map) {
             mapLoaded.resolve(map);
@@ -50,18 +48,18 @@
         mapLoaded.done(function (map) {
             var elements = [];
 
-            collection.each(function (model) {
-                var element = document.createElement('div'),
-                    vanillaOverlay = new app.VanillaOverlay(element, model.get('point'));
+            dataLoaded.done(function () {
+//                console.time('build markers');
+                collection.each(function (model) {
+                    var element = document.createElement('div'),
+                        vanillaOverlay = new app.VanillaOverlay(element, model.get('location'));
 
-                elements.push(element);
-                vanillaOverlay.setMap(map);
-                newView(element, model);
+                    elements.push(element);
+                    vanillaOverlay.setMap(map);
+                    newView(element, model);
+                });
+//                console.timeEnd('build markers');
             });
-
-            //_.each(elements, function (element) {
-            //    element.style.display = 'block';
-            //});
         });
     }
 
