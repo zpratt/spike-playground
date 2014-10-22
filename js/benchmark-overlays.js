@@ -46,19 +46,18 @@
         });
 
         mapLoaded.done(function (map) {
-            var elements = [];
-
             dataLoaded.done(function () {
-//                console.time('build markers');
+                //console.time('build markers');
                 collection.each(function (model) {
                     var element = document.createElement('div'),
                         vanillaOverlay = new app.VanillaOverlay(element, model.get('location'));
 
-                    elements.push(element);
                     vanillaOverlay.setMap(map);
                     newView(element, model);
+
+                    element.style.display = 'block';
                 });
-//                console.timeEnd('build markers');
+                //console.timeEnd('build markers');
             });
         });
     }

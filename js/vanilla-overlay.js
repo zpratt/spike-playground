@@ -6,8 +6,11 @@
     }
 
     function setTopLeftFor(div, sw, ne) {
-        div.style.left = sw + 'px';
-        div.style.top = ne + 'px';
+        var height = div.offsetHeight,
+            width = div.offsetWidth;
+
+        div.style.left = sw - Math.floor(width / 2) + 'px';
+        div.style.top = ne - height - 8 + 'px';
     }
 
     function VanillaOverlay (element, coordinates) {
